@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Money Love (完整版)</title>
+    <title>記帳本</title> <!-- 修改標題 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -21,6 +21,9 @@
         .page.active { display: flex; }
         .modal-enter { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        /* 香菸進度條動畫 */
+        .smoke-ring { transition: stroke-dashoffset 0.35s; transform: rotate(-90deg); transform-origin: 50% 50%; }
     </style>
 </head>
 <body>
@@ -30,9 +33,9 @@
         <!-- 1. 登入頁 -->
         <div id="page-login" class="page active items-center justify-center p-8 bg-[#F9F9F7] z-50">
             <div class="text-center mb-10">
-                <div class="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center soft-shadow text-[#84A98C]"><i class="fa-solid fa-cloud text-4xl"></i></div>
-                <h1 class="text-2xl font-bold text-gray-700">Money Love</h1>
-                <p class="text-xs text-gray-400 mt-2">完整功能版</p>
+                <div class="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center soft-shadow text-[#84A98C]"><i class="fa-solid fa-book-open text-4xl"></i></div>
+                <h1 class="text-2xl font-bold text-gray-700">記帳本</h1>
+                <p class="text-xs text-gray-400 mt-2">簡單生活．紀錄美好</p>
             </div>
             <div class="w-full space-y-4">
                 <input type="text" id="login-id" class="w-full p-4 rounded-xl bg-white outline-none text-gray-700 soft-shadow font-bold" placeholder="設定帳號 (例: love)">
@@ -55,18 +58,24 @@
             </button>
         </div>
 
-        <!-- 3. 主畫面 -->
+        <!-- 3. 主畫面 (記帳列表) -->
         <div id="page-main" class="page relative">
             <header class="pt-10 pb-6 px-6 bg-white rounded-b-[35px] soft-shadow z-10 relative">
                 <div class="flex justify-between items-center mb-4">
-                    <div class="text-xs font-bold text-gray-400 tracking-widest">CURRENT VIEW</div>
-                    <button onclick="logout()" class="text-gray-300"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    <div class="text-xs font-bold text-gray-400 tracking-widest">記帳本</div>
+                    <div class="flex gap-4">
+                        <!-- 男生專屬按鈕：前往香菸頁面 -->
+                        <button onclick="showPage('page-smoke')" id="btn-go-smoke" class="hidden text-gray-400 hover:text-gray-600">
+                            <i class="fa-solid fa-smoking"></i>
+                        </button>
+                        <button onclick="logout()" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    </div>
                 </div>
                 <div class="flex justify-center gap-8 mb-6">
-                    <div onclick="switchView('Boy')" id="avatar-Boy" class="opacity-50 transition transform scale-90 flex flex-col items-center">
+                    <div onclick="switchView('Boy')" id="avatar-Boy" class="opacity-50 transition transform scale-90 flex flex-col items-center cursor-pointer">
                         <div class="w-14 h-14 rounded-full border-2 border-[#84A98C] p-1"><div class="w-full h-full bg-[#84A98C] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person"></i></div></div>
                     </div>
-                    <div onclick="switchView('Girl')" id="avatar-Girl" class="opacity-50 transition transform scale-90 flex flex-col items-center">
+                    <div onclick="switchView('Girl')" id="avatar-Girl" class="opacity-50 transition transform scale-90 flex flex-col items-center cursor-pointer">
                         <div class="w-14 h-14 rounded-full border-2 border-[#E5989B] p-1"><div class="w-full h-full bg-[#E5989B] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person-dress"></i></div></div>
                     </div>
                 </div>
@@ -86,32 +95,73 @@
             <div id="readonly-tip" class="absolute bottom-20 w-full text-center hidden"><span class="bg-gray-800 text-white text-[10px] px-3 py-1 rounded-full opacity-70">只能看，不能幫對方記帳喔</span></div>
         </div>
 
-        <!-- 4. 萬用彈窗 (新增/編輯/刪除) -->
+        <!-- 4. 香菸管理頁面 (男生專屬) -->
+        <div id="page-smoke" class="page bg-[#F9F9F7] relative">
+            <header class="pt-10 pb-6 px-6">
+                <button onclick="showPage('page-main')" class="text-gray-400 mb-4"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
+                <h2 class="text-2xl font-bold text-gray-700">香菸管理</h2>
+                
+                <!-- 品牌設定 -->
+                <div class="mt-4 flex items-center gap-2">
+                    <input type="text" id="smoke-brand" onchange="updateBrand()" class="bg-transparent border-b border-gray-300 text-gray-600 text-sm w-full outline-none focus:border-[#84A98C]" placeholder="輸入香菸品牌 (如: 七星)">
+                    <i class="fa-solid fa-pen text-gray-300 text-xs"></i>
+                </div>
+            </header>
+
+            <main class="flex-1 flex flex-col items-center justify-center px-6 pb-20">
+                
+                <!-- 今日抽菸數 (大圓圈) -->
+                <div class="relative w-64 h-64 flex items-center justify-center mb-8">
+                    <!-- 背景圓 -->
+                    <div class="absolute w-full h-full rounded-full border-[10px] border-gray-200"></div>
+                    <!-- 內容 -->
+                    <div class="text-center z-10">
+                        <p class="text-gray-400 text-sm mb-1">今天已抽</p>
+                        <h1 id="smoke-today-count" class="text-7xl font-bold text-[#84A98C]">0</h1>
+                        <p class="text-gray-400 text-sm mt-1">根</p>
+                    </div>
+                </div>
+
+                <!-- 剩餘庫存卡片 -->
+                <div class="w-full bg-white p-6 rounded-2xl soft-shadow mb-6 flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-gray-400">目前剩餘</p>
+                        <h3 class="text-2xl font-bold text-gray-700"><span id="smoke-stock">0</span> <span class="text-sm font-normal text-gray-400">根</span></h3>
+                    </div>
+                    <!-- 開新包按鈕 -->
+                    <button onclick="updateSmoke('new_pack')" class="bg-[#E9F5DB] text-[#84A98C] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#d4eac0] transition">
+                        <i class="fa-solid fa-box-open mr-1"></i> 開新包 (+20)
+                    </button>
+                </div>
+
+                <!-- 抽一根按鈕 -->
+                <button onclick="updateSmoke('smoke_one')" class="w-full py-5 bg-[#84A98C] text-white rounded-2xl font-bold text-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-fire"></i> 抽一根
+                </button>
+                
+                <p class="text-xs text-gray-400 mt-6 text-center">"健康第一，記得多喝水"</p>
+            </main>
+        </div>
+
+        <!-- 5. 萬用彈窗 (記帳新增/編輯) -->
         <div id="modal-add" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-end sm:items-center sm:justify-center">
             <div class="bg-white w-full sm:w-[450px] sm:rounded-2xl rounded-t-3xl p-6 modal-enter relative">
-                
-                <!-- 標題區 -->
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-bold text-gray-600 text-lg">
                         <span id="modal-title">記一筆</span> 
                         <span id="modal-who" class="text-xs ml-2 bg-gray-100 px-2 py-1 rounded text-gray-400"></span>
                     </h3>
                     <div class="flex gap-4">
-                        <!-- 刪除按鈕 (預設隱藏) -->
                         <button onclick="deleteTransaction()" id="btn-delete" class="text-red-400 hidden hover:bg-red-50 px-2 rounded"><i class="fa-solid fa-trash-can"></i></button>
                         <button onclick="closeModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
                 </div>
-
-                <!-- 輸入區 -->
                 <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-xl text-3xl font-bold text-gray-700 outline-none mb-4" placeholder="金額">
                 <input type="text" id="input-title" class="w-full bg-gray-50 p-4 rounded-xl text-lg text-gray-700 outline-none mb-4" placeholder="備註">
-                
                 <div class="flex gap-4 mb-4">
                     <button onclick="setType('expense')" id="btn-exp" class="flex-1 py-3 rounded-xl border bg-red-50 text-red-400 font-bold border-red-200 transition">支出</button>
                     <button onclick="setType('income')" id="btn-inc" class="flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200 transition">收入</button>
                 </div>
-
                 <button onclick="saveTransaction()" id="btn-submit" class="w-full py-4 bg-gray-800 text-white rounded-xl font-bold shadow-md active:scale-95 transition">儲存</button>
             </div>
         </div>
@@ -137,13 +187,15 @@
         let currentView = myRole || 'Boy';
         let currentType = 'expense';
         let unsubscribe = null;
-        let editingId = null; // 用來記錄現在正在編輯哪一筆
+        let smokeUnsubscribe = null; // 香菸的監聽
+        let editingId = null;
 
         // 2. 啟動 App
         function initApp() {
             if (myRoomId && myRole) {
                 showPage('page-main');
                 initListener();
+                if(myRole === 'Boy') initSmokeListener(); // 如果是男生，啟動香菸監聽
             } else if (myRoomId) {
                 showPage('page-role');
             } else {
@@ -183,14 +235,14 @@
             showPage('page-role');
         }
 
-        // 4. 監聽與列表 (含日期顯示)
+        // 4. 記帳列表監聽
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
 
-            // 如果這裡報錯，請先刪除 .orderBy("timestamp", "desc")，成功顯示後再加回去
             unsubscribe = db.collection("rooms").doc(myRoomId).collection("transactions")
                 .where("who", "==", currentView)
+                .orderBy("timestamp", "desc") 
                 .onSnapshot((snapshot) => {
                     const list = document.getElementById('tx-list');
                     list.innerHTML = '';
@@ -204,7 +256,6 @@
                         const amt = Number(d.amount);
                         if(isExp) total -= amt; else total += amt;
 
-                        // 處理日期格式 (例如 12/14 18:30)
                         let timeStr = "";
                         if(d.timestamp) {
                             const date = d.timestamp.toDate();
@@ -217,8 +268,6 @@
 
                         const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
                         
-                        // 產生列表項目 (加入 onclick 事件來觸發編輯)
-                        // 注意：這裡我們傳遞參數給 openModal
                         const itemHtml = `
                         <div onclick="openModal('${doc.id}', '${d.title}', '${d.amount}', '${d.type}')" 
                              class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
@@ -239,7 +288,76 @@
                 });
         }
 
-        // 5. 儲存功能 (包含新增與更新)
+        // 5. 香菸監聽與邏輯 (男生專屬)
+        function initSmokeListener() {
+            if(smokeUnsubscribe) smokeUnsubscribe();
+            
+            // 監聽房間主文件 (這裡存放香菸資料)
+            smokeUnsubscribe = db.collection("rooms").doc(myRoomId).onSnapshot((doc) => {
+                if(doc.exists) {
+                    const data = doc.data();
+                    const nowStr = new Date().toDateString(); // 例如 "Sun Dec 14 2025"
+                    
+                    // 1. 檢查是否需要重置今日數量
+                    if(data.smoke_last_date !== nowStr) {
+                        // 跨日了，自動歸零
+                        db.collection("rooms").doc(myRoomId).update({
+                            smoke_today: 0,
+                            smoke_last_date: nowStr
+                        });
+                        // 介面會因為 onSnapshot 自動更新，這裡不用手動改 UI
+                    }
+
+                    // 2. 更新 UI
+                    document.getElementById('smoke-brand').value = data.smoke_brand || '';
+                    document.getElementById('smoke-stock').innerText = data.smoke_stock || 0;
+                    document.getElementById('smoke-today-count').innerText = data.smoke_today || 0;
+                }
+            });
+        }
+
+        function updateBrand() {
+            const brand = document.getElementById('smoke-brand').value;
+            db.collection("rooms").doc(myRoomId).update({ smoke_brand: brand }, {merge: true});
+        }
+
+        function updateSmoke(action) {
+            const roomRef = db.collection("rooms").doc(myRoomId);
+            
+            db.runTransaction((transaction) => {
+                return transaction.get(roomRef).then((doc) => {
+                    if (!doc.exists) return; // 理論上不會發生
+                    
+                    const data = doc.data();
+                    let newStock = data.smoke_stock || 0;
+                    let newToday = data.smoke_today || 0;
+
+                    if (action === 'new_pack') {
+                        newStock += 20;
+                    } else if (action === 'smoke_one') {
+                        if (newStock > 0) {
+                            newStock -= 1;
+                            newToday += 1;
+                        } else {
+                            alert("沒菸了！請先開新包");
+                            return; // 中止
+                        }
+                    }
+
+                    transaction.update(roomRef, { 
+                        smoke_stock: newStock,
+                        smoke_today: newToday,
+                        smoke_last_date: new Date().toDateString() // 確保日期是最新的
+                    });
+                });
+            }).then(() => {
+                // 成功，UI 會自動變
+            }).catch((err) => {
+                console.error("更新香菸失敗", err);
+            });
+        }
+
+        // 6. 記帳儲存功能
         function saveTransaction() {
             const amt = document.getElementById('input-amount').value;
             const title = document.getElementById('input-title').value;
@@ -250,17 +368,12 @@
             btn.innerText = "處理中...";
 
             if (editingId) {
-                // 如果有 editingId，代表是「更新」
                 collectionRef.doc(editingId).update({
                     amount: Number(amt),
                     title: title,
                     type: currentType
-                    // 這裡不更新 timestamp，保留原始記帳時間
-                }).then(() => {
-                    closeModal();
-                }).catch(err => alert("更新失敗"));
+                }).then(() => closeModal()).catch(err => alert("更新失敗"));
             } else {
-                // 否則就是「新增」
                 collectionRef.add({
                     who: myRole,
                     amount: Number(amt),
@@ -269,14 +382,12 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
                     closeModal();
-                    // 新增完清空輸入框，方便下一筆
                     document.getElementById('input-amount').value = '';
                     document.getElementById('input-title').value = '';
                 }).catch(err => alert("新增失敗"));
             }
         }
 
-        // 6. 刪除功能
         function deleteTransaction() {
             if(!editingId) return;
             if(confirm("確定要刪除這筆紀錄嗎？")) {
@@ -286,53 +397,44 @@
             }
         }
 
-        // 7. 視窗控制邏輯 (新增 vs 編輯)
+        // 7. 視窗控制
         function openModal(id = null, title = '', amount = '', type = 'expense') {
             const modal = document.getElementById('modal-add');
             const modalTitle = document.getElementById('modal-title');
             const btnDelete = document.getElementById('btn-delete');
             const btnSubmit = document.getElementById('btn-submit');
-            
             modal.style.display = 'flex';
             document.getElementById('modal-who').innerText = myRole;
 
             if (id) {
-                // === 編輯模式 ===
                 editingId = id;
                 modalTitle.innerText = "編輯紀錄";
                 document.getElementById('input-title').value = title;
                 document.getElementById('input-amount').value = amount;
                 setType(type);
-                
-                btnDelete.style.display = 'block'; // 顯示刪除按鈕
+                btnDelete.style.display = 'block';
                 btnSubmit.innerText = "更新紀錄";
-                
-                // 檢查權限：如果看的是別人，隱藏刪除跟更新
-                if(currentView !== myRole) {
-                     btnSubmit.style.display = 'none';
-                     btnDelete.style.display = 'none';
-                     modalTitle.innerText = "檢視詳情 (唯讀)";
-                } else {
-                     btnSubmit.style.display = 'block';
-                }
-
+                if(currentView !== myRole) { btnSubmit.style.display = 'none'; btnDelete.style.display = 'none'; modalTitle.innerText = "檢視詳情 (唯讀)"; }
+                else { btnSubmit.style.display = 'block'; }
             } else {
-                // === 新增模式 ===
                 editingId = null;
                 modalTitle.innerText = "記一筆";
-                // 這裡不清空輸入框，保留上次輸入的體驗可能較好，或可選擇清空
-                // document.getElementById('input-title').value = ''; 
-                // document.getElementById('input-amount').value = '';
-                
-                btnDelete.style.display = 'none'; // 隱藏刪除按鈕
+                btnDelete.style.display = 'none';
                 btnSubmit.innerText = "儲存";
                 btnSubmit.style.display = 'block';
-                setType('expense'); // 預設支出
+                setType('expense');
             }
         }
 
-        // 其他基礎功能
-        function selectRole(role) { localStorage.setItem('myRole', role); myRole = role; currentView = role; showPage('page-main'); initListener(); }
+        // 8. 其他功能
+        function selectRole(role) { 
+            localStorage.setItem('myRole', role); 
+            myRole = role; 
+            currentView = role; 
+            showPage('page-main'); 
+            initListener();
+            if(role === 'Boy') initSmokeListener();
+        }
         function switchView(role) { currentView = role; initListener(); }
         function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
         function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
@@ -342,8 +444,15 @@
             document.getElementById('btn-inc').className = t==='income' ? "flex-1 py-3 rounded-xl border bg-blue-50 text-blue-400 font-bold border-blue-200 transition" : "flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200 transition"; 
         }
         function logout() { localStorage.clear(); location.reload(); }
+        
         function updateUI() {
              const fab = document.getElementById('fab-add');
+             const smokeBtn = document.getElementById('btn-go-smoke'); // 香菸按鈕
+             
+             // 只有我是男生時，才顯示香菸按鈕
+             if(myRole === 'Boy') smokeBtn.classList.remove('hidden');
+             else smokeBtn.classList.add('hidden');
+
              if(currentView !== myRole) { fab.style.display='none'; document.getElementById('readonly-tip').style.display='block'; }
              else { fab.style.display='flex'; document.getElementById('readonly-tip').style.display='none'; }
              document.getElementById('avatar-Boy').style.opacity = currentView === 'Boy' ? '1' : '0.5';
@@ -351,5 +460,4 @@
         }
     </script>
 </body>
-
 </html>
