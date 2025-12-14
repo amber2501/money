@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>記帳本 (專屬版)</title>
+    <title>記帳本 (多品牌香菸版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -55,17 +55,15 @@
             </button>
         </div>
 
-        <!-- 3. 主畫面 -->
+        <!-- 3. 主畫面 (記帳) -->
         <div id="page-main" class="page relative">
             <header class="pt-10 pb-6 px-6 bg-white rounded-b-[35px] soft-shadow z-10 relative">
                 <div class="flex justify-between items-center mb-4">
                     <div class="text-xs font-bold text-gray-400 tracking-widest">記帳本</div>
                     <div class="flex gap-4 items-center">
-                        <!-- 🔥 修改：任何人都能看到香菸按鈕 -->
                         <button onclick="showPage('page-smoke')" id="btn-go-smoke" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center">
                             <i class="fa-solid fa-smoking"></i>
                         </button>
-                        <!-- 🔥 修改：登出按鈕增加 z-index 確保可點擊 -->
                         <button onclick="logout()" class="text-gray-300 hover:text-red-400 w-8 h-8 flex items-center justify-center z-50">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
@@ -95,37 +93,34 @@
             <div id="readonly-tip" class="absolute bottom-20 w-full text-center hidden"><span class="bg-gray-800 text-white text-[10px] px-3 py-1 rounded-full opacity-70">只能看，不能幫對方記帳喔</span></div>
         </div>
 
-        <!-- 4. 香菸頁面 -->
+        <!-- 4. 香菸頁面 (多品牌升級版) -->
         <div id="page-smoke" class="page bg-[#F9F9F7] relative">
-            <header class="pt-10 pb-6 px-6">
-                <button onclick="showPage('page-main')" class="text-gray-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
-                <h2 class="text-2xl font-bold text-gray-700">香菸管理</h2>
-                <div class="mt-4 flex items-center gap-2">
-                    <input type="text" id="smoke-brand" onchange="updateBrand()" class="bg-transparent border-b border-gray-300 text-gray-600 text-sm w-full outline-none focus:border-[#84A98C]" placeholder="輸入香菸品牌">
-                    <i class="fa-solid fa-pen text-gray-300 text-xs"></i>
+            <header class="pt-10 pb-6 px-6 bg-white rounded-b-[30px] soft-shadow mb-4">
+                <button onclick="showPage('page-main')" class="text-gray-400 mb-4 flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-700">香菸管理</h2>
+                        <p class="text-xs text-gray-400 mt-1">健康第一，紀錄每一次</p>
+                    </div>
+                    <!-- 只有男生看得到新增按鈕 -->
+                    <div id="smoke-add-area" class="hidden">
+                        <button onclick="toggleAddSmoke()" class="bg-[#E9F5DB] text-[#84A98C] w-10 h-10 rounded-full flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 新增品牌輸入框 (預設隱藏) -->
+                <div id="add-smoke-box" class="hidden mt-4 bg-gray-50 p-3 rounded-xl animate-fade">
+                    <div class="flex gap-2">
+                        <input type="text" id="new-smoke-name" class="flex-1 bg-white p-2 rounded-lg text-sm outline-none border border-gray-200" placeholder="輸入香菸品牌名稱">
+                        <button onclick="addSmokeBrand()" class="bg-[#84A98C] text-white px-4 py-2 rounded-lg text-xs font-bold">新增</button>
+                    </div>
                 </div>
             </header>
-            <main class="flex-1 flex flex-col items-center justify-center px-6 pb-20">
-                <div class="relative w-64 h-64 flex items-center justify-center mb-8">
-                    <div class="absolute w-full h-full rounded-full border-[10px] border-gray-200"></div>
-                    <div class="text-center z-10">
-                        <p class="text-gray-400 text-sm mb-1">今天已抽</p>
-                        <h1 id="smoke-today-count" class="text-7xl font-bold text-[#84A98C]">0</h1>
-                        <p class="text-gray-400 text-sm mt-1">根</p>
-                    </div>
-                </div>
-                <div class="w-full bg-white p-6 rounded-2xl soft-shadow mb-6 flex justify-between items-center">
-                    <div>
-                        <p class="text-xs text-gray-400">目前剩餘</p>
-                        <h3 class="text-2xl font-bold text-gray-700"><span id="smoke-stock">0</span> <span class="text-sm font-normal text-gray-400">根</span></h3>
-                    </div>
-                    <button onclick="updateSmoke('new_pack')" class="bg-[#E9F5DB] text-[#84A98C] px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#d4eac0] transition">
-                        <i class="fa-solid fa-box-open mr-1"></i> 開新包 (+20)
-                    </button>
-                </div>
-                <button onclick="updateSmoke('smoke_one')" class="w-full py-5 bg-[#84A98C] text-white rounded-2xl font-bold text-xl shadow-lg active:scale-95 transition flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-fire"></i> 抽一根
-                </button>
+
+            <main id="smoke-list" class="flex-1 overflow-y-auto no-scrollbar px-6 pb-20 space-y-4">
+                <div class="text-center text-gray-300 text-xs mt-10">載入中...</div>
             </main>
         </div>
 
@@ -173,7 +168,6 @@
         let smokeUnsubscribe = null;
         let editingId = null;
 
-        // 指定的專屬帳號密碼
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
 
@@ -182,7 +176,7 @@
             if (myRoomId === ALLOWED_ID && myRole) {
                 showPage('page-main');
                 initListener();
-                initSmokeListener(); // 🔥 修改：無論男女，都啟動香菸監聽，這樣女生才看得到資料
+                initSmokeListener(); // 啟動香菸監聽 (男女都啟動，但UI顯示不同)
             } else if (myRoomId === ALLOWED_ID) {
                 showPage('page-role');
             } else {
@@ -200,10 +194,8 @@
             const btn = document.getElementById('btn-login');
 
             if (id !== ALLOWED_ID || pin !== ALLOWED_PIN) {
-                msg.innerText = "帳號/密碼錯誤 (僅限專屬用戶)";
-                return;
+                msg.innerText = "帳號/密碼錯誤 (僅限專屬用戶)"; return;
             }
-
             btn.innerText = "驗證中...";
             
             const roomRef = db.collection("rooms").doc(id);
@@ -214,11 +206,7 @@
                 } else {
                     loginSuccess(id);
                 }
-            }).catch((err) => {
-                console.error(err);
-                msg.innerText = "連線錯誤";
-                btn.innerText = "驗證身分";
-            });
+            }).catch((err) => { msg.innerText = "連線錯誤"; btn.innerText = "驗證身分"; });
         }
 
         function loginSuccess(id) {
@@ -227,7 +215,7 @@
             showPage('page-role');
         }
 
-        // 4. 記帳列表
+        // 4. 記帳列表 (前端排序解決載入問題)
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
@@ -244,7 +232,6 @@
                     let docs = [];
                     snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
 
-                    // 前端排序
                     docs.sort((a, b) => {
                         let t1 = a.timestamp ? a.timestamp.seconds : 0;
                         let t2 = b.timestamp ? b.timestamp.seconds : 0;
@@ -272,10 +259,7 @@
                              class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
                             <div>
                                 <p class="font-bold text-gray-700">${d.title}</p>
-                                <p class="text-xs text-gray-400 mt-1">
-                                    <i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr} 
-                                    <span class="ml-2 px-1 rounded bg-gray-100">${isExp?'支出':'收入'}</span>
-                                </p>
+                                <p class="text-xs text-gray-400 mt-1"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr} <span class="ml-2 px-1 rounded bg-gray-100">${isExp?'支出':'收入'}</span></p>
                             </div>
                             <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
                         </div>`;
@@ -285,72 +269,145 @@
                 });
         }
 
-        // 5. 香菸邏輯 (男女通用)
+        // 5. 🔥 香菸邏輯 (多品牌升級版)
         function initSmokeListener() {
             if(smokeUnsubscribe) smokeUnsubscribe();
-            smokeUnsubscribe = db.collection("rooms").doc(myRoomId).onSnapshot((doc) => {
-                if(doc.exists) {
-                    const data = doc.data();
-                    const nowStr = new Date().toDateString();
-                    if(data.smoke_last_date !== nowStr) {
-                        db.collection("rooms").doc(myRoomId).update({ smoke_today: 0, smoke_last_date: nowStr });
-                    }
-                    document.getElementById('smoke-brand').value = data.smoke_brand || '';
-                    document.getElementById('smoke-stock').innerText = data.smoke_stock || 0;
-                    document.getElementById('smoke-today-count').innerText = data.smoke_today || 0;
-                }
-            });
-        }
 
-        function updateBrand() {
-            const brand = document.getElementById('smoke-brand').value;
-            db.collection("rooms").doc(myRoomId).update({ smoke_brand: brand }, {merge: true});
-        }
+            // 如果是男生，顯示新增按鈕；女生則隱藏
+            const addArea = document.getElementById('smoke-add-area');
+            if (myRole === 'Boy') addArea.classList.remove('hidden'); else addArea.classList.add('hidden');
 
-        function updateSmoke(action) {
-            const roomRef = db.collection("rooms").doc(myRoomId);
-            db.runTransaction((transaction) => {
-                return transaction.get(roomRef).then((doc) => {
-                    if (!doc.exists) return;
-                    const data = doc.data();
-                    let newStock = data.smoke_stock || 0;
-                    let newToday = data.smoke_today || 0;
-
-                    if (action === 'new_pack') newStock += 20;
-                    else if (action === 'smoke_one') {
-                        if (newStock > 0) { newStock -= 1; newToday += 1; }
-                        else { alert("沒菸了！"); return; }
+            // 監聽 "smokes" 子集合
+            smokeUnsubscribe = db.collection("rooms").doc(myRoomId).collection("smokes")
+                .onSnapshot((snapshot) => {
+                    const list = document.getElementById('smoke-list');
+                    list.innerHTML = '';
+                    
+                    if(snapshot.empty) {
+                        list.innerHTML = `<div class="text-center text-gray-300 text-sm mt-10">還沒有紀錄任何香菸品牌<br>${myRole === 'Boy' ? '點擊右上角 + 新增' : '等待男生新增'}</div>`;
+                        return;
                     }
 
-                    transaction.update(roomRef, { 
-                        smoke_stock: newStock, smoke_today: newToday, smoke_last_date: new Date().toDateString() 
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        const todayStr = new Date().toDateString();
+                        
+                        // 判斷是否需要歸零 (如果最後更新日期不是今天，顯示 0)
+                        let displayToday = d.todayCount;
+                        if(d.lastUpdated !== todayStr) displayToday = 0;
+
+                        // 只有男生看得到操作按鈕
+                        let actionButtons = '';
+                        let deleteBtn = '';
+                        
+                        if(myRole === 'Boy') {
+                            actionButtons = `
+                                <div class="flex gap-2 mt-4">
+                                    <button onclick="updateSmokeStock('${doc.id}', 20)" class="flex-1 bg-[#E9F5DB] text-[#84A98C] py-2 rounded-lg text-sm font-bold active:scale-95 transition">
+                                        + 開新包 (20)
+                                    </button>
+                                    <button onclick="smokeOne('${doc.id}', ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="flex-1 bg-[#84A98C] text-white py-2 rounded-lg text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-fire"></i> 抽一根
+                                    </button>
+                                </div>
+                            `;
+                            deleteBtn = `<button onclick="deleteSmokeBrand('${doc.id}')" class="text-gray-300 hover:text-red-400 px-2"><i class="fa-solid fa-trash"></i></button>`;
+                        }
+
+                        list.innerHTML += `
+                        <div class="bg-white p-5 rounded-2xl soft-shadow relative">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-bold text-gray-700">${d.brandName}</h3>
+                                ${deleteBtn}
+                            </div>
+                            
+                            <div class="flex justify-between items-center mt-2">
+                                <div class="text-center w-1/2 border-r border-gray-100">
+                                    <p class="text-xs text-gray-400">今日已抽</p>
+                                    <p class="text-3xl font-bold text-[#84A98C]">${displayToday}</p>
+                                </div>
+                                <div class="text-center w-1/2">
+                                    <p class="text-xs text-gray-400">剩餘庫存</p>
+                                    <p class="text-3xl font-bold text-gray-600">${d.stock}</p>
+                                </div>
+                            </div>
+                            ${actionButtons}
+                        </div>
+                        `;
                     });
                 });
+        }
+
+        // 新增香菸品牌
+        function toggleAddSmoke() {
+            const box = document.getElementById('add-smoke-box');
+            box.classList.toggle('hidden');
+        }
+
+        function addSmokeBrand() {
+            const name = document.getElementById('new-smoke-name').value;
+            if(!name) return;
+            
+            db.collection("rooms").doc(myRoomId).collection("smokes").add({
+                brandName: name,
+                stock: 20,      // 預設一包
+                todayCount: 0,
+                lastUpdated: new Date().toDateString()
+            }).then(() => {
+                document.getElementById('new-smoke-name').value = '';
+                toggleAddSmoke();
             });
         }
 
-        // 6. 存檔與刪除
+        function deleteSmokeBrand(id) {
+            if(confirm("確定要刪除這個香菸品牌嗎？紀錄將無法復原")) {
+                db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).delete();
+            }
+        }
+
+        // 更新庫存 (開新包)
+        function updateSmokeStock(id, amount) {
+            db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({
+                stock: firebase.firestore.FieldValue.increment(amount)
+            });
+        }
+
+        // 抽一根 (需判斷跨日)
+        function smokeOne(id, currentToday, currentStock, lastDate) {
+            if(currentStock <= 0) { alert("沒菸了！請先開新包"); return; }
+            
+            const todayStr = new Date().toDateString();
+            let newToday = currentToday + 1;
+            
+            // 如果資料庫裡的日期是舊的，代表今天是第一根
+            if (lastDate !== todayStr) {
+                newToday = 1; 
+            }
+
+            db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({
+                stock: firebase.firestore.FieldValue.increment(-1),
+                todayCount: newToday,
+                lastUpdated: todayStr
+            });
+        }
+
+
+        // 6. 存檔與刪除 (記帳)
         function saveTransaction() {
             const amt = document.getElementById('input-amount').value;
             const title = document.getElementById('input-title').value;
             if(!amt || !title) return;
-
             const collectionRef = db.collection("rooms").doc(myRoomId).collection("transactions");
             const btn = document.getElementById('btn-submit');
             btn.innerText = "處理中...";
 
             if (editingId) {
-                collectionRef.doc(editingId).update({
-                    amount: Number(amt), title: title, type: currentType
-                }).then(() => closeModal());
+                collectionRef.doc(editingId).update({ amount: Number(amt), title: title, type: currentType }).then(() => closeModal());
             } else {
                 collectionRef.add({
-                    who: myRole, amount: Number(amt), title: title, type: currentType,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    who: myRole, amount: Number(amt), title: title, type: currentType, timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 }).then(() => {
-                    closeModal();
-                    document.getElementById('input-amount').value = '';
-                    document.getElementById('input-title').value = '';
+                    closeModal(); document.getElementById('input-amount').value = ''; document.getElementById('input-title').value = '';
                 });
             }
         }
@@ -362,20 +419,15 @@
             }
         }
 
-        // 7. 登出功能 (🔥 修正：加入確認與重新整理)
+        // 7. 登出
         function logout() { 
-            if(confirm("確定要登出嗎？")) {
-                localStorage.clear(); 
-                location.reload(); 
-            }
+            if(confirm("確定要登出嗎？")) { localStorage.clear(); location.reload(); }
         }
 
-        // 其他功能
+        // UI Helpers
         function selectRole(role) { 
             localStorage.setItem('myRole', role); myRole = role; currentView = role; 
-            showPage('page-main'); 
-            initListener();
-            initSmokeListener(); // 🔥 登入後立即啟動監聽
+            showPage('page-main'); initListener(); initSmokeListener();
         }
         function switchView(role) { currentView = role; initListener(); }
         function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -387,12 +439,10 @@
             if(id) {
                 editingId=id; document.getElementById('input-title').value=title; document.getElementById('input-amount').value=amt; setType(type);
                 document.getElementById('modal-title').innerText="編輯";
-                if(currentView===myRole){ btnSub.style.display='block'; btnDel.style.display='block'; btnSub.innerText="更新"; }
-                else { btnSub.style.display='none'; btnDel.style.display='none'; }
+                if(currentView===myRole){ btnSub.style.display='block'; btnDel.style.display='block'; btnSub.innerText="更新"; } else { btnSub.style.display='none'; btnDel.style.display='none'; }
             } else {
                 editingId=null; document.getElementById('modal-title').innerText="記一筆";
-                btnDel.style.display='none'; btnSub.innerText="儲存"; btnSub.style.display='block';
-                setType('expense');
+                btnDel.style.display='none'; btnSub.innerText="儲存"; btnSub.style.display='block'; setType('expense');
             }
         }
         function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
@@ -404,9 +454,7 @@
         
         function updateUI() {
              const fab = document.getElementById('fab-add');
-             // 🔥 修改：永遠顯示香菸按鈕，讓女生也能點
              document.getElementById('btn-go-smoke').classList.remove('hidden');
-
              if(currentView !== myRole) { fab.style.display='none'; document.getElementById('readonly-tip').style.display='block'; }
              else { fab.style.display='flex'; document.getElementById('readonly-tip').style.display='none'; }
              document.getElementById('avatar-Boy').style.opacity = currentView === 'Boy' ? '1' : '0.5';
