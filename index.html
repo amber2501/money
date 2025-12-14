@@ -175,7 +175,6 @@
 
         // 2. 啟動 App
         function initApp() {
-            // 檢查本地是否有紀錄，且必須符合專屬ID (防止舊的錯誤ID殘留)
             if (myRoomId === ALLOWED_ID && myRole) {
                 showPage('page-main');
                 initListener();
@@ -183,42 +182,37 @@
             } else if (myRoomId === ALLOWED_ID) {
                 showPage('page-role');
             } else {
-                // 如果ID不對，強制清除並登出
                 localStorage.clear();
                 showPage('page-login');
             }
         }
         initApp();
 
-        // 3. 登入邏輯 (嚴格限制版)
+        // 3. 登入邏輯 (限制版)
         function handleLogin() {
             const id = document.getElementById('login-id').value.trim();
             const pin = document.getElementById('login-pin').value.trim();
             const msg = document.getElementById('login-msg');
             const btn = document.getElementById('btn-login');
 
-            // --- ⚠️ 這裡新增了強制檢查 ⚠️ ---
             if (id !== ALLOWED_ID || pin !== ALLOWED_PIN) {
-                msg.innerText = "此帳號/密碼無效 (僅限專屬用戶使用)";
-                return; // 直接擋掉，不連線
+                msg.innerText = "帳號/密碼錯誤 (僅限專屬用戶)";
+                return;
             }
 
             btn.innerText = "驗證中...";
             
-            // 驗證通過，連線 Firebase 確保房間存在
             const roomRef = db.collection("rooms").doc(id);
             roomRef.get().then((doc) => {
                 if (!doc.exists) {
-                    // 如果是第一次，自動建立房間
                     roomRef.set({ pin: pin, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
                         .then(() => loginSuccess(id));
                 } else {
-                    // 房間已存在，直接登入
                     loginSuccess(id);
                 }
             }).catch((err) => {
                 console.error(err);
-                msg.innerText = "連線錯誤，請檢查網路";
+                msg.innerText = "連線錯誤";
                 btn.innerText = "驗證身分";
             });
         }
@@ -229,15 +223,14 @@
             showPage('page-role');
         }
 
-        // 4. 記帳列表監聽
+        // 4. 記帳列表監聽 (🔥 關鍵修改：移除 orderBy 以解決載入卡住問題)
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
 
-            // ⚠️ 這裡保留了排序功能，如果你還是卡載入中，請看下方的說明
             unsubscribe = db.collection("rooms").doc(myRoomId).collection("transactions")
                 .where("who", "==", currentView)
-                .orderBy("timestamp", "desc") 
+                // .orderBy("timestamp", "desc")  <--- 🔥 註解掉這行，改用前端排序
                 .onSnapshot((snapshot) => {
                     const list = document.getElementById('tx-list');
                     list.innerHTML = '';
@@ -245,8 +238,19 @@
 
                     if(snapshot.empty) list.innerHTML = '<div class="text-center text-gray-300 text-xs mt-10">還沒有記帳，點擊 + 新增</div>';
 
-                    snapshot.forEach(doc => {
-                        const d = doc.data();
+                    // 1. 取得資料並轉成陣列
+                    let docs = [];
+                    snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+
+                    // 2. 前端排序 (解決 Firebase 索引問題)
+                    docs.sort((a, b) => {
+                        let t1 = a.timestamp ? a.timestamp.seconds : 0;
+                        let t2 = b.timestamp ? b.timestamp.seconds : 0;
+                        return t2 - t1; // 時間新到舊
+                    });
+
+                    // 3. 渲染畫面
+                    docs.forEach(d => {
                         const isExp = d.type === 'expense';
                         const amt = Number(d.amount);
                         if(isExp) total -= amt; else total += amt;
@@ -263,7 +267,7 @@
                         const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
                         
                         list.innerHTML += `
-                        <div onclick="openModal('${doc.id}', '${d.title}', '${d.amount}', '${d.type}')" 
+                        <div onclick="openModal('${d.id}', '${d.title}', '${d.amount}', '${d.type}')" 
                              class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
                             <div>
                                 <p class="font-bold text-gray-700">${d.title}</p>
