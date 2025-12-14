@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Love (完整版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #eee; }
+        .app-container { font-family: 'Quicksand', 'Noto Sans TC', sans-serif; background-color: #F9F9F7; max-width: 450px; margin: 0 auto; height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .soft-shadow { box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .page { display: none; height: 100%; width: 100%; flex-direction: column; }
+        .page.active { display: flex; }
+        .modal-enter { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="app-container sm:rounded-[30px] sm:my-5 sm:h-[850px] sm:shadow-2xl">
+
+        <!-- 1. 登入頁 -->
+        <div id="page-login" class="page active items-center justify-center p-8 bg-[#F9F9F7] z-50">
+            <div class="text-center mb-10">
+                <div class="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center soft-shadow text-[#84A98C]"><i class="fa-solid fa-cloud text-4xl"></i></div>
+                <h1 class="text-2xl font-bold text-gray-700">Money Love</h1>
+                <p class="text-xs text-gray-400 mt-2">完整功能版</p>
+            </div>
+            <div class="w-full space-y-4">
+                <input type="text" id="login-id" class="w-full p-4 rounded-xl bg-white outline-none text-gray-700 soft-shadow font-bold" placeholder="設定帳號 (例: love)">
+                <input type="number" id="login-pin" class="w-full p-4 rounded-xl bg-white outline-none text-gray-700 soft-shadow font-bold" placeholder="設定密碼 (例: 520)">
+                <button onclick="handleLogin()" id="btn-login" class="w-full py-4 bg-[#84A98C] text-white rounded-xl font-bold soft-shadow mt-6">登入</button>
+                <p id="login-msg" class="text-center text-xs text-red-400 min-h-[20px] mt-2"></p>
+            </div>
+        </div>
+
+        <!-- 2. 選角頁 -->
+        <div id="page-role" class="page items-center justify-center p-8 bg-[#F9F9F7]">
+            <h2 class="text-xl font-bold text-gray-600 mb-8">你是誰？</h2>
+            <button onclick="selectRole('Boy')" class="w-full py-6 bg-white rounded-2xl mb-4 soft-shadow flex items-center px-6 gap-4 border-2 border-transparent hover:border-[#84A98C]">
+                <div class="w-12 h-12 rounded-full bg-[#E9F5DB] flex items-center justify-center text-[#84A98C] text-xl"><i class="fa-solid fa-person"></i></div>
+                <span class="font-bold text-gray-700">我是 男生</span>
+            </button>
+            <button onclick="selectRole('Girl')" class="w-full py-6 bg-white rounded-2xl soft-shadow flex items-center px-6 gap-4 border-2 border-transparent hover:border-[#E5989B]">
+                <div class="w-12 h-12 rounded-full bg-[#FFDFD3] flex items-center justify-center text-[#E5989B] text-xl"><i class="fa-solid fa-person-dress"></i></div>
+                <span class="font-bold text-gray-700">我是 女生</span>
+            </button>
+        </div>
+
+        <!-- 3. 主畫面 -->
+        <div id="page-main" class="page relative">
+            <header class="pt-10 pb-6 px-6 bg-white rounded-b-[35px] soft-shadow z-10 relative">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="text-xs font-bold text-gray-400 tracking-widest">CURRENT VIEW</div>
+                    <button onclick="logout()" class="text-gray-300"><i class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+                <div class="flex justify-center gap-8 mb-6">
+                    <div onclick="switchView('Boy')" id="avatar-Boy" class="opacity-50 transition transform scale-90 flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-full border-2 border-[#84A98C] p-1"><div class="w-full h-full bg-[#84A98C] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person"></i></div></div>
+                    </div>
+                    <div onclick="switchView('Girl')" id="avatar-Girl" class="opacity-50 transition transform scale-90 flex flex-col items-center">
+                        <div class="w-14 h-14 rounded-full border-2 border-[#E5989B] p-1"><div class="w-full h-full bg-[#E5989B] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person-dress"></i></div></div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h1 id="total-balance" class="text-4xl font-bold text-gray-700 mb-2">0</h1>
+                    <p class="text-xs text-gray-400">本月結餘</p>
+                </div>
+            </header>
+            
+            <main id="tx-list" class="flex-1 overflow-y-auto no-scrollbar px-5 pt-4 pb-24 space-y-3">
+                <div class="text-center text-gray-300 text-xs mt-10">載入中...</div>
+            </main>
+
+            <div class="absolute bottom-6 w-full flex justify-center z-20">
+                <button onclick="openModal()" id="fab-add" class="w-16 h-16 rounded-full shadow-lg text-white text-2xl flex items-center justify-center bg-[#84A98C] transition active:scale-95"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="readonly-tip" class="absolute bottom-20 w-full text-center hidden"><span class="bg-gray-800 text-white text-[10px] px-3 py-1 rounded-full opacity-70">只能看，不能幫對方記帳喔</span></div>
+        </div>
+
+        <!-- 4. 萬用彈窗 (新增/編輯/刪除) -->
+        <div id="modal-add" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-end sm:items-center sm:justify-center">
+            <div class="bg-white w-full sm:w-[450px] sm:rounded-2xl rounded-t-3xl p-6 modal-enter relative">
+                
+                <!-- 標題區 -->
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-gray-600 text-lg">
+                        <span id="modal-title">記一筆</span> 
+                        <span id="modal-who" class="text-xs ml-2 bg-gray-100 px-2 py-1 rounded text-gray-400"></span>
+                    </h3>
+                    <div class="flex gap-4">
+                        <!-- 刪除按鈕 (預設隱藏) -->
+                        <button onclick="deleteTransaction()" id="btn-delete" class="text-red-400 hidden hover:bg-red-50 px-2 rounded"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="closeModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+                    </div>
+                </div>
+
+                <!-- 輸入區 -->
+                <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-xl text-3xl font-bold text-gray-700 outline-none mb-4" placeholder="金額">
+                <input type="text" id="input-title" class="w-full bg-gray-50 p-4 rounded-xl text-lg text-gray-700 outline-none mb-4" placeholder="備註">
+                
+                <div class="flex gap-4 mb-4">
+                    <button onclick="setType('expense')" id="btn-exp" class="flex-1 py-3 rounded-xl border bg-red-50 text-red-400 font-bold border-red-200 transition">支出</button>
+                    <button onclick="setType('income')" id="btn-inc" class="flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200 transition">收入</button>
+                </div>
+
+                <button onclick="saveTransaction()" id="btn-submit" class="w-full py-4 bg-gray-800 text-white rounded-xl font-bold shadow-md active:scale-95 transition">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. 初始化 Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyBeFhH_-YgwjT6ZKPKEn3DbWfkgZ0jMkxM",
+          authDomain: "money-c8e66.firebaseapp.com",
+          projectId: "money-c8e66",
+          storageBucket: "money-c8e66.firebasestorage.app",
+          messagingSenderId: "960224276188",
+          appId: "1:960224276188:web:647ba7f509fe5b98984e19",
+          measurementId: "G-PXP0ZNQY2H"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // 全域變數
+        let myRoomId = localStorage.getItem('myRoomId');
+        let myRole = localStorage.getItem('myRole');
+        let currentView = myRole || 'Boy';
+        let currentType = 'expense';
+        let unsubscribe = null;
+        let editingId = null; // 用來記錄現在正在編輯哪一筆
+
+        // 2. 啟動 App
+        function initApp() {
+            if (myRoomId && myRole) {
+                showPage('page-main');
+                initListener();
+            } else if (myRoomId) {
+                showPage('page-role');
+            } else {
+                showPage('page-login');
+            }
+        }
+        initApp();
+
+        // 3. 登入邏輯
+        function handleLogin() {
+            const id = document.getElementById('login-id').value.trim();
+            const pin = document.getElementById('login-pin').value.trim();
+            const msg = document.getElementById('login-msg');
+            const btn = document.getElementById('btn-login');
+
+            if(!id || !pin) { msg.innerText = "請輸入完整"; return; }
+            btn.innerText = "連線中...";
+
+            const roomRef = db.collection("rooms").doc(id);
+            roomRef.get().then((doc) => {
+                if (doc.exists) {
+                    if (doc.data().pin == pin) loginSuccess(id);
+                    else { msg.innerText = "密碼錯誤"; btn.innerText = "登入"; }
+                } else {
+                    roomRef.set({ pin: pin, createdAt: firebase.firestore.FieldValue.serverTimestamp() })
+                        .then(() => loginSuccess(id))
+                        .catch(err => { console.error(err); msg.innerText = "建立失敗"; btn.innerText = "登入"; });
+                }
+            }).catch((err) => {
+                msg.innerText = "連線失敗: " + err.code; btn.innerText = "登入";
+            });
+        }
+
+        function loginSuccess(id) {
+            localStorage.setItem('myRoomId', id);
+            myRoomId = id;
+            showPage('page-role');
+        }
+
+        // 4. 監聽與列表 (含日期顯示)
+        function initListener() {
+            updateUI();
+            if(unsubscribe) unsubscribe();
+
+            // 如果這裡報錯，請先刪除 .orderBy("timestamp", "desc")，成功顯示後再加回去
+            unsubscribe = db.collection("rooms").doc(myRoomId).collection("transactions")
+                .where("who", "==", currentView)
+                .orderBy("timestamp", "desc") 
+                .onSnapshot((snapshot) => {
+                    const list = document.getElementById('tx-list');
+                    list.innerHTML = '';
+                    let total = 0;
+
+                    if(snapshot.empty) list.innerHTML = '<div class="text-center text-gray-300 text-xs mt-10">還沒有記帳，點擊 + 新增</div>';
+
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        const isExp = d.type === 'expense';
+                        const amt = Number(d.amount);
+                        if(isExp) total -= amt; else total += amt;
+
+                        // 處理日期格式 (例如 12/14 18:30)
+                        let timeStr = "";
+                        if(d.timestamp) {
+                            const date = d.timestamp.toDate();
+                            const mm = (date.getMonth()+1).toString().padStart(2, '0');
+                            const dd = date.getDate().toString().padStart(2, '0');
+                            const hh = date.getHours().toString().padStart(2, '0');
+                            const min = date.getMinutes().toString().padStart(2, '0');
+                            timeStr = `${mm}/${dd} ${hh}:${min}`;
+                        }
+
+                        const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
+                        
+                        // 產生列表項目 (加入 onclick 事件來觸發編輯)
+                        // 注意：這裡我們傳遞參數給 openModal
+                        const itemHtml = `
+                        <div onclick="openModal('${doc.id}', '${d.title}', '${d.amount}', '${d.type}')" 
+                             class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
+                            <div>
+                                <p class="font-bold text-gray-700">${d.title}</p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                    <i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr} 
+                                    <span class="ml-2 px-1 rounded bg-gray-100">${isExp?'支出':'收入'}</span>
+                                </p>
+                            </div>
+                            <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
+                        </div>`;
+                        
+                        list.innerHTML += itemHtml;
+                    });
+                    document.getElementById('total-balance').innerText = total;
+                    document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#84A98C' : '#E5989B';
+                });
+        }
+
+        // 5. 儲存功能 (包含新增與更新)
+        function saveTransaction() {
+            const amt = document.getElementById('input-amount').value;
+            const title = document.getElementById('input-title').value;
+            if(!amt || !title) return;
+
+            const collectionRef = db.collection("rooms").doc(myRoomId).collection("transactions");
+            const btn = document.getElementById('btn-submit');
+            btn.innerText = "處理中...";
+
+            if (editingId) {
+                // 如果有 editingId，代表是「更新」
+                collectionRef.doc(editingId).update({
+                    amount: Number(amt),
+                    title: title,
+                    type: currentType
+                    // 這裡不更新 timestamp，保留原始記帳時間
+                }).then(() => {
+                    closeModal();
+                }).catch(err => alert("更新失敗"));
+            } else {
+                // 否則就是「新增」
+                collectionRef.add({
+                    who: myRole,
+                    amount: Number(amt),
+                    title: title,
+                    type: currentType,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => {
+                    closeModal();
+                    // 新增完清空輸入框，方便下一筆
+                    document.getElementById('input-amount').value = '';
+                    document.getElementById('input-title').value = '';
+                }).catch(err => alert("新增失敗"));
+            }
+        }
+
+        // 6. 刪除功能
+        function deleteTransaction() {
+            if(!editingId) return;
+            if(confirm("確定要刪除這筆紀錄嗎？")) {
+                db.collection("rooms").doc(myRoomId).collection("transactions").doc(editingId).delete()
+                    .then(() => closeModal())
+                    .catch(err => alert("刪除失敗"));
+            }
+        }
+
+        // 7. 視窗控制邏輯 (新增 vs 編輯)
+        function openModal(id = null, title = '', amount = '', type = 'expense') {
+            const modal = document.getElementById('modal-add');
+            const modalTitle = document.getElementById('modal-title');
+            const btnDelete = document.getElementById('btn-delete');
+            const btnSubmit = document.getElementById('btn-submit');
+            
+            modal.style.display = 'flex';
+            document.getElementById('modal-who').innerText = myRole;
+
+            if (id) {
+                // === 編輯模式 ===
+                editingId = id;
+                modalTitle.innerText = "編輯紀錄";
+                document.getElementById('input-title').value = title;
+                document.getElementById('input-amount').value = amount;
+                setType(type);
+                
+                btnDelete.style.display = 'block'; // 顯示刪除按鈕
+                btnSubmit.innerText = "更新紀錄";
+                
+                // 檢查權限：如果看的是別人，隱藏刪除跟更新
+                if(currentView !== myRole) {
+                     btnSubmit.style.display = 'none';
+                     btnDelete.style.display = 'none';
+                     modalTitle.innerText = "檢視詳情 (唯讀)";
+                } else {
+                     btnSubmit.style.display = 'block';
+                }
+
+            } else {
+                // === 新增模式 ===
+                editingId = null;
+                modalTitle.innerText = "記一筆";
+                // 這裡不清空輸入框，保留上次輸入的體驗可能較好，或可選擇清空
+                // document.getElementById('input-title').value = ''; 
+                // document.getElementById('input-amount').value = '';
+                
+                btnDelete.style.display = 'none'; // 隱藏刪除按鈕
+                btnSubmit.innerText = "儲存";
+                btnSubmit.style.display = 'block';
+                setType('expense'); // 預設支出
+            }
+        }
+
+        // 其他基礎功能
+        function selectRole(role) { localStorage.setItem('myRole', role); myRole = role; currentView = role; showPage('page-main'); initListener(); }
+        function switchView(role) { currentView = role; initListener(); }
+        function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+        function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
+        function setType(t) { 
+            currentType = t; 
+            document.getElementById('btn-exp').className = t==='expense' ? "flex-1 py-3 rounded-xl border bg-red-50 text-red-400 font-bold border-red-200 transition" : "flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200 transition"; 
+            document.getElementById('btn-inc').className = t==='income' ? "flex-1 py-3 rounded-xl border bg-blue-50 text-blue-400 font-bold border-blue-200 transition" : "flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200 transition"; 
+        }
+        function logout() { localStorage.clear(); location.reload(); }
+        function updateUI() {
+             const fab = document.getElementById('fab-add');
+             if(currentView !== myRole) { fab.style.display='none'; document.getElementById('readonly-tip').style.display='block'; }
+             else { fab.style.display='flex'; document.getElementById('readonly-tip').style.display='none'; }
+             document.getElementById('avatar-Boy').style.opacity = currentView === 'Boy' ? '1' : '0.5';
+             document.getElementById('avatar-Girl').style.opacity = currentView === 'Girl' ? '1' : '0.5';
+        }
+    </script>
+</body>
+</html>
