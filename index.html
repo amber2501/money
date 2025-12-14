@@ -191,7 +191,6 @@
             // 如果這裡報錯，請先刪除 .orderBy("timestamp", "desc")，成功顯示後再加回去
             unsubscribe = db.collection("rooms").doc(myRoomId).collection("transactions")
                 .where("who", "==", currentView)
-                .orderBy("timestamp", "desc") 
                 .onSnapshot((snapshot) => {
                     const list = document.getElementById('tx-list');
                     list.innerHTML = '';
@@ -352,4 +351,5 @@
         }
     </script>
 </body>
+
 </html>
