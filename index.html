@@ -60,11 +60,15 @@
             <header class="pt-10 pb-6 px-6 bg-white rounded-b-[35px] soft-shadow z-10 relative">
                 <div class="flex justify-between items-center mb-4">
                     <div class="text-xs font-bold text-gray-400 tracking-widest">記帳本</div>
-                    <div class="flex gap-4">
-                        <button onclick="showPage('page-smoke')" id="btn-go-smoke" class="hidden text-gray-400 hover:text-gray-600">
+                    <div class="flex gap-4 items-center">
+                        <!-- 🔥 修改：任何人都能看到香菸按鈕 -->
+                        <button onclick="showPage('page-smoke')" id="btn-go-smoke" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center">
                             <i class="fa-solid fa-smoking"></i>
                         </button>
-                        <button onclick="logout()" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-right-from-bracket"></i></button>
+                        <!-- 🔥 修改：登出按鈕增加 z-index 確保可點擊 -->
+                        <button onclick="logout()" class="text-gray-300 hover:text-red-400 w-8 h-8 flex items-center justify-center z-50">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="flex justify-center gap-8 mb-6">
@@ -94,7 +98,7 @@
         <!-- 4. 香菸頁面 -->
         <div id="page-smoke" class="page bg-[#F9F9F7] relative">
             <header class="pt-10 pb-6 px-6">
-                <button onclick="showPage('page-main')" class="text-gray-400 mb-4"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
+                <button onclick="showPage('page-main')" class="text-gray-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
                 <h2 class="text-2xl font-bold text-gray-700">香菸管理</h2>
                 <div class="mt-4 flex items-center gap-2">
                     <input type="text" id="smoke-brand" onchange="updateBrand()" class="bg-transparent border-b border-gray-300 text-gray-600 text-sm w-full outline-none focus:border-[#84A98C]" placeholder="輸入香菸品牌">
@@ -147,7 +151,7 @@
     </div>
 
     <script>
-        // 1. 初始化 Firebase (你的專屬 Config)
+        // 1. 初始化 Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyBeFhH_-YgwjT6ZKPKEn3DbWfkgZ0jMkxM",
           authDomain: "money-c8e66.firebaseapp.com",
@@ -178,7 +182,7 @@
             if (myRoomId === ALLOWED_ID && myRole) {
                 showPage('page-main');
                 initListener();
-                if(myRole === 'Boy') initSmokeListener();
+                initSmokeListener(); // 🔥 修改：無論男女，都啟動香菸監聽，這樣女生才看得到資料
             } else if (myRoomId === ALLOWED_ID) {
                 showPage('page-role');
             } else {
@@ -188,7 +192,7 @@
         }
         initApp();
 
-        // 3. 登入邏輯 (限制版)
+        // 3. 登入邏輯
         function handleLogin() {
             const id = document.getElementById('login-id').value.trim();
             const pin = document.getElementById('login-pin').value.trim();
@@ -223,14 +227,13 @@
             showPage('page-role');
         }
 
-        // 4. 記帳列表監聽 (🔥 關鍵修改：移除 orderBy 以解決載入卡住問題)
+        // 4. 記帳列表
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
 
             unsubscribe = db.collection("rooms").doc(myRoomId).collection("transactions")
                 .where("who", "==", currentView)
-                // .orderBy("timestamp", "desc")  <--- 🔥 註解掉這行，改用前端排序
                 .onSnapshot((snapshot) => {
                     const list = document.getElementById('tx-list');
                     list.innerHTML = '';
@@ -238,18 +241,16 @@
 
                     if(snapshot.empty) list.innerHTML = '<div class="text-center text-gray-300 text-xs mt-10">還沒有記帳，點擊 + 新增</div>';
 
-                    // 1. 取得資料並轉成陣列
                     let docs = [];
                     snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
 
-                    // 2. 前端排序 (解決 Firebase 索引問題)
+                    // 前端排序
                     docs.sort((a, b) => {
                         let t1 = a.timestamp ? a.timestamp.seconds : 0;
                         let t2 = b.timestamp ? b.timestamp.seconds : 0;
-                        return t2 - t1; // 時間新到舊
+                        return t2 - t1;
                     });
 
-                    // 3. 渲染畫面
                     docs.forEach(d => {
                         const isExp = d.type === 'expense';
                         const amt = Number(d.amount);
@@ -284,7 +285,7 @@
                 });
         }
 
-        // 5. 香菸邏輯
+        // 5. 香菸邏輯 (男女通用)
         function initSmokeListener() {
             if(smokeUnsubscribe) smokeUnsubscribe();
             smokeUnsubscribe = db.collection("rooms").doc(myRoomId).onSnapshot((doc) => {
@@ -361,10 +362,20 @@
             }
         }
 
-        // 其他基礎
+        // 7. 登出功能 (🔥 修正：加入確認與重新整理)
+        function logout() { 
+            if(confirm("確定要登出嗎？")) {
+                localStorage.clear(); 
+                location.reload(); 
+            }
+        }
+
+        // 其他功能
         function selectRole(role) { 
             localStorage.setItem('myRole', role); myRole = role; currentView = role; 
-            showPage('page-main'); initListener(); if(role==='Boy') initSmokeListener();
+            showPage('page-main'); 
+            initListener();
+            initSmokeListener(); // 🔥 登入後立即啟動監聽
         }
         function switchView(role) { currentView = role; initListener(); }
         function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
@@ -390,11 +401,12 @@
             document.getElementById('btn-exp').className = t==='expense' ? "flex-1 py-3 rounded-xl border bg-red-50 text-red-400 font-bold border-red-200" : "flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200"; 
             document.getElementById('btn-inc').className = t==='income' ? "flex-1 py-3 rounded-xl border bg-blue-50 text-blue-400 font-bold border-blue-200" : "flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200"; 
         }
-        function logout() { localStorage.clear(); location.reload(); }
+        
         function updateUI() {
              const fab = document.getElementById('fab-add');
-             const smokeBtn = document.getElementById('btn-go-smoke');
-             if(myRole === 'Boy') smokeBtn.classList.remove('hidden'); else smokeBtn.classList.add('hidden');
+             // 🔥 修改：永遠顯示香菸按鈕，讓女生也能點
+             document.getElementById('btn-go-smoke').classList.remove('hidden');
+
              if(currentView !== myRole) { fab.style.display='none'; document.getElementById('readonly-tip').style.display='block'; }
              else { fab.style.display='flex'; document.getElementById('readonly-tip').style.display='none'; }
              document.getElementById('avatar-Boy').style.opacity = currentView === 'Boy' ? '1' : '0.5';
