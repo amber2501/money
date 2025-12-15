@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳本 (每日分頁版)</title>
+    <title>記帳本 (藍色系版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,7 +19,6 @@
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #eee; touch-action: manipulation; }
         .app-container { font-family: 'Quicksand', 'Noto Sans TC', sans-serif; background-color: #F9F9F7; max-width: 450px; margin: 0 auto; height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* 隱藏滾動條但保留功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
@@ -28,18 +27,26 @@
         .page.active { display: flex; }
         .modal-enter { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .sortable-ghost { opacity: 0.4; background-color: #E9F5DB; }
+        /* 拖曳時的顏色改為淺藍 */
+        .sortable-ghost { opacity: 0.4; background-color: #ECF4FF; }
         
         .cat-item { transition: all 0.2s; border: 2px solid transparent; }
-        .cat-item.active { border-color: #84A98C; background-color: #E9F5DB; color: #52796F; transform: scale(1.05); }
+        /* 類別選中改為藍色系 */
+        .cat-item.active { border-color: #5D93E1; background-color: #ECF4FF; color: #3A6EA5; transform: scale(1.05); }
         .cat-item.active-income { border-color: #8ECAE6; background-color: #E0F4FF; color: #219EBC; transform: scale(1.05); }
         
         input[type="month"]::-webkit-calendar-picker-indicator,
         input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
 
-        /* 日期選擇條樣式 */
         .day-pill { transition: all 0.2s; min-width: 48px; }
-        .day-pill.active { background-color: #84A98C; color: white; box-shadow: 0 4px 10px rgba(132, 169, 140, 0.4); transform: scale(1.05); border-color: transparent; }
+        /* 日曆條選中改為藍色 */
+        .day-pill.active { background-color: #5D93E1; color: white; box-shadow: 0 4px 10px rgba(93, 147, 225, 0.4); transform: scale(1.05); border-color: transparent; }
+
+        /* 行事曆樣式 */
+        .cal-cell { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4px; border-radius: 50%; cursor: pointer; position: relative; transition: all 0.2s; }
+        .cal-cell.selected { background-color: #333; color: white; }
+        .cal-cell.today { border: 2px solid #5D93E1; font-weight: bold; }
+        .cal-dot { width: 4px; height: 4px; border-radius: 50%; margin: 0 1px; }
     </style>
 </head>
 <body>
@@ -49,14 +56,14 @@
         <!-- 1. 登入頁 -->
         <div id="page-login" class="page active items-center justify-center p-8 bg-[#F9F9F7] z-50">
             <div class="text-center mb-10">
-                <div class="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center soft-shadow text-[#84A98C]"><i class="fa-solid fa-lock text-4xl"></i></div>
+                <div class="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center soft-shadow text-[#5D93E1]"><i class="fa-solid fa-lock text-4xl"></i></div>
                 <h1 class="text-2xl font-bold text-gray-700">記帳本</h1>
                 <p class="text-xs text-gray-400 mt-2">專屬訪問權限</p>
             </div>
             <div class="w-full space-y-4">
                 <input type="text" id="login-id" class="w-full p-4 rounded-xl bg-white outline-none text-gray-700 soft-shadow font-bold" placeholder="輸入專屬帳號 ID">
                 <input type="number" id="login-pin" class="w-full p-4 rounded-xl bg-white outline-none text-gray-700 soft-shadow font-bold" placeholder="輸入密碼">
-                <button onclick="handleLogin()" id="btn-login" class="w-full py-4 bg-[#84A98C] text-white rounded-xl font-bold soft-shadow mt-6">驗證身分</button>
+                <button onclick="handleLogin()" id="btn-login" class="w-full py-4 bg-[#5D93E1] text-white rounded-xl font-bold soft-shadow mt-6">驗證身分</button>
                 <p id="login-msg" class="text-center text-xs text-red-400 min-h-[20px] mt-2"></p>
             </div>
         </div>
@@ -64,8 +71,9 @@
         <!-- 2. 選角頁 -->
         <div id="page-role" class="page items-center justify-center p-8 bg-[#F9F9F7]">
             <h2 class="text-xl font-bold text-gray-600 mb-8">你是誰？</h2>
-            <button onclick="selectRole('Boy')" class="w-full py-6 bg-white rounded-2xl mb-4 soft-shadow flex items-center px-6 gap-4 border-2 border-transparent hover:border-[#84A98C]">
-                <div class="w-12 h-12 rounded-full bg-[#E9F5DB] flex items-center justify-center text-[#84A98C] text-xl"><i class="fa-solid fa-person"></i></div>
+            <!-- 男生按鈕改為藍色系 -->
+            <button onclick="selectRole('Boy')" class="w-full py-6 bg-white rounded-2xl mb-4 soft-shadow flex items-center px-6 gap-4 border-2 border-transparent hover:border-[#5D93E1]">
+                <div class="w-12 h-12 rounded-full bg-[#ECF4FF] flex items-center justify-center text-[#5D93E1] text-xl"><i class="fa-solid fa-person"></i></div>
                 <span class="font-bold text-gray-700">我是 男生</span>
             </button>
             <button onclick="selectRole('Girl')" class="w-full py-6 bg-white rounded-2xl soft-shadow flex items-center px-6 gap-4 border-2 border-transparent hover:border-[#E5989B]">
@@ -80,6 +88,9 @@
                 <div class="flex justify-between items-center mb-4">
                     <div class="text-xs font-bold text-gray-400 tracking-widest">記帳本</div>
                     <div class="flex gap-4 items-center">
+                        <button onclick="showPage('page-calendar')" class="text-gray-400 hover:text-[#5D93E1] w-8 h-8 flex items-center justify-center" title="行事曆">
+                            <i class="fa-regular fa-calendar-days text-lg"></i>
+                        </button>
                         <button onclick="showPage('page-smoke')" id="btn-go-smoke" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center">
                             <i class="fa-solid fa-smoking"></i>
                         </button>
@@ -90,8 +101,9 @@
                 </div>
                 
                 <div class="flex justify-center gap-8 mb-4">
+                    <!-- 男生頭像改為藍色 -->
                     <div onclick="switchView('Boy')" id="avatar-Boy" class="opacity-50 transition transform scale-90 flex flex-col items-center cursor-pointer">
-                        <div class="w-14 h-14 rounded-full border-2 border-[#84A98C] p-1"><div class="w-full h-full bg-[#84A98C] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person"></i></div></div>
+                        <div class="w-14 h-14 rounded-full border-2 border-[#5D93E1] p-1"><div class="w-full h-full bg-[#5D93E1] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person"></i></div></div>
                     </div>
                     <div onclick="switchView('Girl')" id="avatar-Girl" class="opacity-50 transition transform scale-90 flex flex-col items-center cursor-pointer">
                         <div class="w-14 h-14 rounded-full border-2 border-[#E5989B] p-1"><div class="w-full h-full bg-[#E5989B] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person-dress"></i></div></div>
@@ -120,9 +132,8 @@
                     </div>
                 </div>
 
-                <!-- 🔥 新增：橫向日曆選擇條 -->
                 <div id="day-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 px-1 mb-2">
-                    <!-- Javascript 將自動產生內容 -->
+                    <!-- JS 生成 -->
                 </div>
             </header>
             
@@ -131,24 +142,67 @@
             </main>
 
             <div class="absolute bottom-6 w-full flex justify-center z-20">
-                <button onclick="openModal()" id="fab-add" class="w-16 h-16 rounded-full shadow-lg text-white text-2xl flex items-center justify-center bg-[#84A98C] transition active:scale-95"><i class="fa-solid fa-plus"></i></button>
+                <button onclick="openModal()" id="fab-add" class="w-16 h-16 rounded-full shadow-lg text-white text-2xl flex items-center justify-center bg-[#5D93E1] transition active:scale-95"><i class="fa-solid fa-plus"></i></button>
             </div>
             <div id="readonly-tip" class="absolute bottom-20 w-full text-center hidden"><span class="bg-gray-800 text-white text-[10px] px-3 py-1 rounded-full opacity-70">只能看，不能幫對方記帳喔</span></div>
         </div>
 
-        <!-- 4. 香菸頁面 -->
+        <!-- 4. 行事曆頁面 -->
+        <div id="page-calendar" class="page bg-[#F9F9F7] relative">
+            <header class="pt-10 pb-4 px-6 bg-white rounded-b-[30px] soft-shadow mb-4 z-10">
+                <button onclick="showPage('page-main')" class="text-gray-400 mb-4 flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
+                
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-gray-700">共用行事曆</h2>
+                    <div class="flex gap-2">
+                        <button onclick="changeCalMonth(-1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                        <span id="cal-title" class="text-lg font-bold text-gray-600 w-24 text-center leading-8"></span>
+                        <button onclick="changeCalMonth(1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 text-center mb-2">
+                    <div class="text-xs text-red-400 font-bold">日</div>
+                    <div class="text-xs text-gray-400">一</div>
+                    <div class="text-xs text-gray-400">二</div>
+                    <div class="text-xs text-gray-400">三</div>
+                    <div class="text-xs text-gray-400">四</div>
+                    <div class="text-xs text-gray-400">五</div>
+                    <div class="text-xs text-gray-400">六</div>
+                </div>
+
+                <div id="cal-grid" class="grid grid-cols-7 gap-y-2 gap-x-1 text-sm text-gray-700 mb-2">
+                    <!-- JS 生成 -->
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto no-scrollbar px-6 pb-20">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 id="cal-selected-date" class="font-bold text-gray-500">選擇日期</h3>
+                </div>
+                <div id="event-list" class="space-y-3">
+                    <div class="text-center text-xs text-gray-300 mt-10">無行程</div>
+                </div>
+            </main>
+
+            <div class="absolute bottom-6 w-full flex justify-center z-20">
+                <button onclick="openEventModal()" class="w-16 h-16 rounded-full shadow-lg text-white text-2xl flex items-center justify-center bg-[#5D93E1] transition active:scale-95"><i class="fa-solid fa-plus"></i></button>
+            </div>
+        </div>
+
+        <!-- 5. 香菸頁面 -->
         <div id="page-smoke" class="page bg-[#F9F9F7] relative">
             <header class="pt-10 pb-4 px-6 bg-white rounded-b-[30px] soft-shadow mb-4 z-10">
                 <button onclick="showPage('page-main')" class="text-gray-400 mb-4 flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
                 <div class="flex justify-between items-start">
                     <div>
                         <h2 class="text-2xl font-bold text-gray-700">香菸管理</h2>
-                        <button onclick="showGlobalHistory()" class="text-xs text-[#84A98C] bg-[#E9F5DB] px-3 py-1 rounded-full mt-2 font-bold hover:bg-[#d4eac0]">
+                        <button onclick="showGlobalHistory()" class="text-xs text-[#5D93E1] bg-[#ECF4FF] px-3 py-1 rounded-full mt-2 font-bold hover:bg-[#d4eac0]">
                             <i class="fa-solid fa-list-ul mr-1"></i> 詳細歷史
                         </button>
                     </div>
                     <div id="smoke-add-area" class="hidden">
-                        <button onclick="toggleAddSmoke()" class="bg-[#E9F5DB] text-[#84A98C] w-10 h-10 rounded-full flex items-center justify-center shadow-sm">
+                        <button onclick="toggleAddSmoke()" class="bg-[#ECF4FF] text-[#5D93E1] w-10 h-10 rounded-full flex items-center justify-center shadow-sm">
                             <i class="fa-solid fa-plus"></i>
                         </button>
                     </div>
@@ -156,7 +210,7 @@
                 <div id="add-smoke-box" class="hidden mt-4 bg-gray-50 p-3 rounded-xl animate-fade">
                     <div class="flex gap-2">
                         <input type="text" id="new-smoke-name" class="flex-1 bg-white p-2 rounded-lg text-sm outline-none border border-gray-200" placeholder="輸入香菸品牌">
-                        <button onclick="addSmokeBrand()" class="bg-[#84A98C] text-white px-4 py-2 rounded-lg text-xs font-bold">新增</button>
+                        <button onclick="addSmokeBrand()" class="bg-[#5D93E1] text-white px-4 py-2 rounded-lg text-xs font-bold">新增</button>
                     </div>
                 </div>
                 <p id="drag-hint" class="text-[10px] text-gray-300 text-center mt-2 hidden">長按左側圖示可拖曳排序</p>
@@ -167,7 +221,7 @@
             </main>
         </div>
 
-        <!-- 5. 記帳彈窗 -->
+        <!-- 6. 記帳彈窗 -->
         <div id="modal-add" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-end sm:items-center sm:justify-center">
             <div class="bg-white w-full sm:w-[450px] sm:rounded-2xl rounded-t-3xl p-6 modal-enter relative max-h-[85vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
@@ -184,9 +238,9 @@
                 <div class="mb-4 space-y-3">
                     <div>
                         <p class="text-xs text-gray-400 mb-1 ml-1">金額</p>
-                        <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-2xl text-4xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#84A98C]/20 transition" placeholder="0">
+                        <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-2xl text-4xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#5D93E1]/20 transition" placeholder="0">
                     </div>
-                    <div class="flex items-center bg-gray-50 rounded-xl px-4 py-2 border border-transparent focus-within:border-[#84A98C]/50 transition">
+                    <div class="flex items-center bg-gray-50 rounded-xl px-4 py-2 border border-transparent focus-within:border-[#5D93E1]/50 transition">
                         <span class="text-xs text-gray-400 whitespace-nowrap mr-3"><i class="fa-regular fa-calendar"></i> 日期</span>
                         <input type="date" id="input-date" class="bg-transparent text-gray-700 font-bold outline-none flex-1 text-right">
                     </div>
@@ -197,13 +251,28 @@
                     <div id="category-grid" class="grid grid-cols-4 gap-3 mb-2"></div>
                 </div>
                 <div class="mb-4">
-                    <input type="text" id="input-title" class="w-full bg-transparent border-b border-gray-200 p-2 text-gray-600 outline-none focus:border-[#84A98C] transition" placeholder="備註 (選填)">
+                    <input type="text" id="input-title" class="w-full bg-transparent border-b border-gray-200 p-2 text-gray-600 outline-none focus:border-[#5D93E1] transition" placeholder="備註 (選填)">
                 </div>
-                <button onclick="saveTransaction()" id="btn-submit" class="w-full py-4 bg-[#84A98C] text-white rounded-xl font-bold shadow-lg active:scale-95 transition">儲存</button>
+                <button onclick="saveTransaction()" id="btn-submit" class="w-full py-4 bg-[#5D93E1] text-white rounded-xl font-bold shadow-lg active:scale-95 transition">儲存</button>
             </div>
         </div>
 
-        <!-- 6. 詳細歷史彈窗 -->
+        <!-- 7. 行事曆新增彈窗 -->
+        <div id="modal-event" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-end sm:items-center sm:justify-center">
+            <div class="bg-white w-full sm:w-[450px] sm:rounded-2xl rounded-t-3xl p-6 modal-enter relative flex flex-col">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-gray-600">新增行程</h3>
+                    <button onclick="closeEventModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div class="mb-6">
+                    <p class="text-xs text-gray-400 mb-1 ml-1">行程名稱</p>
+                    <input type="text" id="event-title" class="w-full bg-gray-50 p-4 rounded-xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#5D93E1]/20 transition" placeholder="例：看電影">
+                </div>
+                <button onclick="saveEvent()" class="w-full py-4 bg-[#5D93E1] text-white rounded-xl font-bold shadow-lg active:scale-95 transition">新增行程</button>
+            </div>
+        </div>
+
+        <!-- 8. 詳細歷史彈窗 -->
         <div id="modal-history" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-center justify-center">
             <div class="bg-white w-full max-w-sm rounded-2xl p-6 modal-enter m-4 relative max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
@@ -236,14 +305,19 @@
         let currentCategory = 'others';
         let unsubscribe = null;
         let smokeUnsubscribe = null;
+        let calendarUnsubscribe = null; 
         let editingId = null;
         let sortableInstance = null;
         let currentTotalStock = 0;
         let transactionsData = {}; 
         let allTransactionsList = []; 
-        
+        let allEventsList = []; 
+
         let currentMonthStr = new Date().toISOString().slice(0, 7);
-        let currentDayFilter = null; // null = 全部, 數字 = 特定日期
+        let currentDayFilter = null; 
+        
+        let calCurrentDate = new Date(); 
+        let calSelectedDate = new Date(); 
 
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
@@ -281,8 +355,11 @@
         function initApp() {
             if (myRoomId === ALLOWED_ID && myRole) {
                 document.getElementById('month-picker').value = currentMonthStr;
-                showPage('page-main'); initListener(); initSmokeListener(); 
-                renderDayBar(); // 初始化日曆條
+                showPage('page-main'); 
+                initListener(); 
+                initSmokeListener(); 
+                initCalendarListener(); 
+                renderDayBar(); 
             } else if (myRoomId === ALLOWED_ID) {
                 showPage('page-role');
             } else {
@@ -306,6 +383,7 @@
         }
         function loginSuccess(id) { localStorage.setItem('myRoomId', id); myRoomId = id; showPage('page-role'); }
 
+        // --- 記帳主頁面邏輯 ---
         function changeMonth(delta) {
             const parts = currentMonthStr.split('-');
             const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1 + delta, 1);
@@ -313,7 +391,7 @@
             const m = String(date.getMonth() + 1).padStart(2, '0');
             currentMonthStr = `${y}-${m}`;
             document.getElementById('month-picker').value = currentMonthStr;
-            currentDayFilter = null; // 切換月份時，重置為顯示全部
+            currentDayFilter = null; 
             renderDayBar();
             renderCurrentMonth();
         }
@@ -325,25 +403,21 @@
             renderCurrentMonth();
         }
 
-        // 🔥 新增：產生橫向日曆條
         function renderDayBar() {
             const bar = document.getElementById('day-bar');
             bar.innerHTML = '';
             
-            // 取得當月天數
             const parts = currentMonthStr.split('-');
             const year = parseInt(parts[0]);
             const month = parseInt(parts[1]);
             const daysInMonth = new Date(year, month, 0).getDate();
             
-            // 1. 全部按鈕
             const allActive = currentDayFilter === null ? 'active' : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50';
             bar.innerHTML += `
                 <button onclick="selectDay(null)" class="day-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap ${allActive}">
                     全部
                 </button>`;
 
-            // 2. 每天的按鈕
             const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
             for(let d = 1; d <= daysInMonth; d++) {
                 const dateObj = new Date(year, month - 1, d);
@@ -358,7 +432,6 @@
             }
         }
 
-        // 🔥 新增：選擇日期
         function selectDay(day) {
             currentDayFilter = day;
             renderDayBar();
@@ -399,7 +472,6 @@
             let totalIncome = 0; 
             let totalExpense = 0;
             
-            // 篩選月份
             let filteredDocs = allTransactionsList.filter(d => {
                 if(!d.timestamp) return false;
                 const date = d.timestamp.toDate();
@@ -408,18 +480,17 @@
                 return `${y}-${m}` === currentMonthStr;
             });
 
-            // 計算整月總額 (不受日期篩選影響，保持上方大數字為月結)
             filteredDocs.forEach(d => {
                 const amt = Number(d.amount);
                 if(d.type === 'expense') { total -= amt; totalExpense += amt; } 
                 else { total += amt; totalIncome += amt; }
             });
             document.getElementById('total-balance').innerText = total;
-            document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#84A98C' : '#E5989B';
+            // 男生顏色改為藍色
+            document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#5D93E1' : '#E5989B';
             document.getElementById('total-income').innerText = totalIncome;
             document.getElementById('total-expense').innerText = totalExpense;
 
-            // 🔥 二次篩選：如果選了特定日期，列表只顯示那天
             if (currentDayFilter !== null) {
                 filteredDocs = filteredDocs.filter(d => {
                     const date = d.timestamp.toDate();
@@ -450,9 +521,9 @@
                     
                     const currentDateStr = `${mm}月${dd}日 ${day}`;
 
-                    // 如果是顯示「全部」，才需要日期標題
                     if (currentDayFilter === null && currentDateStr !== lastDateStr) {
-                        list.innerHTML += `<div class="text-xs text-gray-400 font-bold mt-4 mb-2 ml-2 pl-2 border-l-2 border-[#84A98C]">${currentDateStr}</div>`;
+                        // 日期標題線條改為藍色
+                        list.innerHTML += `<div class="text-xs text-gray-400 font-bold mt-4 mb-2 ml-2 pl-2 border-l-2 border-[#5D93E1]">${currentDateStr}</div>`;
                         lastDateStr = currentDateStr;
                     }
 
@@ -461,22 +532,183 @@
                     timeStr = `${hh}:${min}`;
                 }
 
-                const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
+                // 支出顏色 (女生粉紅)，收入顏色 (男生藍)
+                const color = isExp ? 'text-[#E5989B]' : 'text-[#5D93E1]';
                 const catList = CATEGORIES[d.type] || CATEGORIES.expense;
                 const catObj = catList.find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
                 const displayTitle = d.title ? d.title : catObj.name;
                 
+                // 列表項目的背景改為淺藍
+                const bgClass = isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#ECF4FF] text-[#5D93E1]';
+
                 list.innerHTML += `
                 <div onclick="openModal('${d.id}')" 
                      class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full ${isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#E0F4FF] text-[#84A98C]'} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
+                                <div class="w-10 h-10 rounded-full ${bgClass} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
                                 <div><p class="font-bold text-gray-700">${displayTitle}</p><p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p></div>
                             </div>
                             <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
                 </div>`;
             });
         }
+
+        // --- 行事曆功能 ---
+
+        function initCalendarListener() {
+            if(calendarUnsubscribe) calendarUnsubscribe();
+            calendarUnsubscribe = db.collection("rooms").doc(myRoomId).collection("events")
+                .onSnapshot((snapshot) => {
+                    allEventsList = [];
+                    snapshot.forEach(doc => {
+                        allEventsList.push({ id: doc.id, ...doc.data() });
+                    });
+                    renderCalendar(); 
+                    renderDayEvents(); 
+                });
+        }
+
+        function changeCalMonth(delta) {
+            calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('cal-grid');
+            const title = document.getElementById('cal-title');
+            grid.innerHTML = '';
+            
+            const year = calCurrentDate.getFullYear();
+            const month = calCurrentDate.getMonth();
+            
+            title.innerText = `${year}-${String(month + 1).padStart(2,'0')}`;
+            
+            const firstDay = new Date(year, month, 1).getDay(); 
+            const daysInMonth = new Date(year, month + 1, 0).getDate(); 
+
+            for(let i=0; i<firstDay; i++) {
+                grid.innerHTML += `<div></div>`;
+            }
+
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                const dayEvents = allEventsList.filter(e => e.date === dateStr);
+                let dotsHtml = '';
+                
+                const hasBoy = dayEvents.some(e => e.creator === 'Boy');
+                const hasGirl = dayEvents.some(e => e.creator === 'Girl');
+                
+                // 男生的圓點改為藍色
+                if(hasBoy) dotsHtml += `<div class="cal-dot bg-[#5D93E1]"></div>`;
+                if(hasGirl) dotsHtml += `<div class="cal-dot bg-[#E5989B]"></div>`;
+
+                const isSelected = calSelectedDate.getFullYear() === year && 
+                                   calSelectedDate.getMonth() === month && 
+                                   calSelectedDate.getDate() === d;
+                
+                const today = new Date();
+                const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+
+                const classes = `cal-cell ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`;
+
+                grid.innerHTML += `
+                    <div onclick="selectCalDate(${year}, ${month}, ${d})" class="${classes}">
+                        <span>${d}</span>
+                        <div class="flex mt-1">${dotsHtml}</div>
+                    </div>`;
+            }
+        }
+
+        function selectCalDate(year, month, d) {
+            calSelectedDate = new Date(year, month, d);
+            renderCalendar();
+            renderDayEvents();
+        }
+
+        function renderDayEvents() {
+            const list = document.getElementById('event-list');
+            const dateLabel = document.getElementById('cal-selected-date');
+            
+            const y = calSelectedDate.getFullYear();
+            const m = String(calSelectedDate.getMonth() + 1).padStart(2,'0');
+            const d = String(calSelectedDate.getDate()).padStart(2,'0');
+            const dateStr = `${y}-${m}-${d}`;
+            
+            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            dateLabel.innerText = `${m}月${d}日 ${weekDays[calSelectedDate.getDay()]}`;
+
+            const events = allEventsList.filter(e => e.date === dateStr);
+            list.innerHTML = '';
+
+            if (events.length === 0) {
+                list.innerHTML = `<div class="text-center text-xs text-gray-300 mt-10">當日無行程</div>`;
+                return;
+            }
+
+            events.forEach(e => {
+                // 男生邊框和文字改為藍色
+                const borderColor = e.creator === 'Boy' ? 'border-[#5D93E1]' : 'border-[#E5989B]';
+                const textColor = e.creator === 'Boy' ? 'text-[#5D93E1]' : 'text-[#E5989B]';
+                const creatorName = e.creator === 'Boy' ? '男生' : '女生';
+
+                list.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl soft-shadow border-l-4 ${borderColor} flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-gray-700 text-lg">${e.title}</p>
+                            <p class="text-xs text-gray-400 mt-1">由 ${creatorName} 建立</p>
+                        </div>
+                        <button onclick="deleteEvent('${e.id}')" class="text-gray-300 hover:text-red-400 px-2"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+        }
+
+        function openEventModal() {
+            document.getElementById('modal-event').style.display = 'flex';
+            document.getElementById('event-title').value = '';
+            document.getElementById('event-title').focus();
+        }
+
+        function closeEventModal() {
+            document.getElementById('modal-event').style.display = 'none';
+        }
+
+        function saveEvent() {
+            const title = document.getElementById('event-title').value.trim();
+            if(!title) return alert("請輸入行程名稱");
+
+            const y = calSelectedDate.getFullYear();
+            const m = String(calSelectedDate.getMonth() + 1).padStart(2,'0');
+            const d = String(calSelectedDate.getDate()).padStart(2,'0');
+            const dateStr = `${y}-${m}-${d}`;
+
+            const btn = document.querySelector('#modal-event button');
+            const oldText = btn.innerText;
+            btn.innerText = "儲存中...";
+
+            db.collection("rooms").doc(myRoomId).collection("events").add({
+                title: title,
+                date: dateStr,
+                creator: myRole,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                closeEventModal();
+                btn.innerText = oldText;
+            }).catch(err => {
+                alert("儲存失敗");
+                btn.innerText = oldText;
+            });
+        }
+
+        function deleteEvent(id) {
+            if(confirm("刪除此行程？")) {
+                db.collection("rooms").doc(myRoomId).collection("events").doc(id).delete();
+            }
+        }
+
+
+        // --- 香菸與歷史紀錄 ---
 
         function initSmokeListener() {
             if(smokeUnsubscribe) smokeUnsubscribe();
@@ -505,20 +737,23 @@
                         let controls = '', stockEdit = '', dragHandle = '', menuBtn = '';
                         if(myRole === 'Boy') {
                             dragHandle = `<div class="drag-handle text-gray-300 mr-3 cursor-move px-2"><i class="fa-solid fa-bars"></i></div>`;
-                            stockEdit = `<button onclick="editStock('${doc.id}', ${d.stock})" class="text-gray-300 hover:text-[#84A98C] ml-1"><i class="fa-solid fa-pen text-[10px]"></i></button>`;
+                            // 編輯按鈕改藍色 hover
+                            stockEdit = `<button onclick="editStock('${doc.id}', ${d.stock})" class="text-gray-300 hover:text-[#5D93E1] ml-1"><i class="fa-solid fa-pen text-[10px]"></i></button>`;
+                            // 計數顏色改為藍色
                             controls = `
                                 <div class="flex items-center gap-3">
                                     <button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', -1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200">-</button>
-                                    <span class="text-xl font-bold text-[#84A98C] w-6 text-center">${displayToday}</span>
-                                    <button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', 1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-[#84A98C] text-white font-bold shadow-md active:scale-95">+</button>
+                                    <span class="text-xl font-bold text-[#5D93E1] w-6 text-center">${displayToday}</span>
+                                    <button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', 1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-[#5D93E1] text-white font-bold shadow-md active:scale-95">+</button>
                                 </div>`;
+                            // 標籤背景改為淺藍，文字改藍
                             menuBtn = `
                                 <div class="flex flex-col gap-2 ml-4 border-l border-gray-100 pl-4 items-center justify-center">
-                                    <button onclick="openNewPack('${doc.id}', '${d.brandName}', ${d.stock})" class="text-xs bg-[#E9F5DB] text-[#84A98C] px-2 py-1 rounded font-bold whitespace-nowrap active:scale-95">開新包</button>
+                                    <button onclick="openNewPack('${doc.id}', '${d.brandName}', ${d.stock})" class="text-xs bg-[#ECF4FF] text-[#5D93E1] px-2 py-1 rounded font-bold whitespace-nowrap active:scale-95">開新包</button>
                                     <button onclick="deleteSmokeBrand('${doc.id}')" class="text-gray-300 text-xs hover:text-red-400 mt-1"><i class="fa-solid fa-trash"></i></button>
                                 </div>`;
                         } else {
-                            controls = `<span class="text-xl font-bold text-[#84A98C] px-2">今日: ${displayToday}</span>`;
+                            controls = `<span class="text-xl font-bold text-[#5D93E1] px-2">今日: ${displayToday}</span>`;
                         }
                         list.innerHTML += `
                         <div class="bg-white p-3 rounded-xl soft-shadow flex items-center justify-between mb-2 relative" data-id="${doc.id}">
@@ -610,17 +845,17 @@
                         return `${k}: ${v}${stockInfo}`;
                     }).join('<br>');
                     
-                    let packStr = packs.length > 0 ? `<div class="text-[10px] text-[#84A98C] mt-1"><i class="fa-solid fa-box-open"></i> 開了: ${packs.join(', ')}</div>` : '';
+                    let packStr = packs.length > 0 ? `<div class="text-[10px] text-[#5D93E1] mt-1"><i class="fa-solid fa-box-open"></i> 開了: ${packs.join(', ')}</div>` : '';
                     if(!detailStr) detailStr = "無詳細資料";
                     
                     let editBtn = '';
                     if (myRole === 'Girl') {
-                        editBtn = `<button onclick="editHistoryLog('${date}', ${total})" class="ml-2 text-gray-300 hover:text-[#84A98C]"><i class="fa-solid fa-pen text-xs"></i></button>`;
+                        editBtn = `<button onclick="editHistoryLog('${date}', ${total})" class="ml-2 text-gray-300 hover:text-[#5D93E1]"><i class="fa-solid fa-pen text-xs"></i></button>`;
                     }
 
                     list.innerHTML += `
                         <div class="border-b border-gray-100 py-3">
-                            <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">${date}</span><span class="text-[#84A98C] font-bold text-lg">${total} 根 ${editBtn}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">${date}</span><span class="text-[#5D93E1] font-bold text-lg">${total} 根 ${editBtn}</span></div>
                             <div class="text-xs text-gray-400 mt-1 leading-relaxed">${detailStr}</div>${packStr}
                         </div>`;
                 });
@@ -671,9 +906,19 @@
         function deleteTransaction() { if(editingId && confirm("刪除此紀錄？")) db.collection("rooms").doc(myRoomId).collection("transactions").doc(editingId).delete().then(() => closeModal()); }
 
         // UI Helpers
-        function selectRole(role) { localStorage.setItem('myRole', role); myRole = role; currentView = role; showPage('page-main'); initListener(); initSmokeListener(); }
+        function selectRole(role) { localStorage.setItem('myRole', role); myRole = role; currentView = role; showPage('page-main'); initListener(); initSmokeListener(); initCalendarListener(); renderDayBar(); }
         function switchView(role) { currentView = role; initListener(); }
-        function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+        function showPage(id) { 
+            document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); 
+            document.getElementById(id).classList.add('active'); 
+            
+            if(id === 'page-calendar') {
+                calCurrentDate = new Date(); 
+                calSelectedDate = new Date(); 
+                renderCalendar();
+                renderDayEvents();
+            }
+        }
         
         function openModal(id = null) {
             document.getElementById('modal-add').style.display='flex'; 
@@ -766,7 +1011,8 @@
                 el.querySelector('i').classList.add('text-gray-400');
             });
             const activeClass = currentType === 'expense' ? 'active' : 'active-income';
-            const iconColor = currentType === 'expense' ? 'text-[#52796F]' : 'text-[#219EBC]';
+            // 藍色圖標
+            const iconColor = currentType === 'expense' ? 'text-[#5D93E1]' : 'text-[#219EBC]';
             const target = document.getElementById(`cat-${id}`);
             if(target) {
                 target.classList.add(activeClass);
