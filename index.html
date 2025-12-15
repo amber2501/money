@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳本 (庫存歷史版)</title>
+    <title>記帳本 (完美修復版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -152,8 +152,8 @@
                         <button onclick="setType('income')" id="tab-income" class="px-6 py-1.5 rounded-md text-sm font-bold transition text-gray-400">收入</button>
                     </div>
                     <div class="flex gap-3">
-                        <!-- 🔥 刪除按鈕 (預設隱藏，openModal時判斷顯示) -->
-                        <button onclick="deleteTransaction()" id="btn-delete" class="text-red-300 hidden hover:text-red-500 w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-trash-can text-lg"></i></button>
+                        <!-- 垃圾桶按鈕 (預設 hidden) -->
+                        <button onclick="deleteTransaction()" id="btn-delete" class="hidden text-red-300 hover:text-red-500 w-8 h-8 items-center justify-center"><i class="fa-solid fa-trash-can text-lg"></i></button>
                         <button onclick="closeModal()" class="text-gray-400 w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
                 </div>
@@ -207,6 +207,8 @@
         let smokeUnsubscribe = null;
         let editingId = null;
         let sortableInstance = null;
+        let currentTotalStock = 0;
+        let transactionsData = {}; // 本地暫存
 
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
@@ -267,7 +269,6 @@
         }
         function loginSuccess(id) { localStorage.setItem('myRoomId', id); myRoomId = id; showPage('page-role'); }
 
-        // 4. 記帳
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
@@ -278,9 +279,17 @@
                     list.innerHTML = '';
                     let total = 0; let totalIncome = 0; let totalExpense = 0;
                     if(snapshot.empty) list.innerHTML = '<div class="text-center text-gray-300 text-xs mt-10">還沒有記帳，點擊 + 新增</div>';
+                    
                     let docs = [];
-                    snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        const id = doc.id;
+                        docs.push({ id, ...d });
+                        transactionsData[id] = d; 
+                    });
+                    
                     docs.sort((a, b) => { let t1 = a.timestamp?a.timestamp.seconds:0; let t2 = b.timestamp?b.timestamp.seconds:0; return t2-t1; });
+                    
                     docs.forEach(d => {
                         const isExp = d.type === 'expense';
                         const amt = Number(d.amount);
@@ -296,8 +305,9 @@
                         const catList = CATEGORIES[d.type] || CATEGORIES.expense;
                         const catObj = catList.find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
                         const displayTitle = d.title ? d.title : catObj.name;
+                        
                         list.innerHTML += `
-                        <div onclick="openModal('${d.id}', '${d.title||''}', '${d.amount}', '${d.type}', '${d.category}')" 
+                        <div onclick="openModal('${d.id}')" 
                              class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-full ${isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#E0F4FF] text-[#84A98C]'} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
@@ -313,7 +323,6 @@
                 });
         }
 
-        // 5. 香菸
         function initSmokeListener() {
             if(smokeUnsubscribe) smokeUnsubscribe();
             const addArea = document.getElementById('smoke-add-area');
@@ -326,10 +335,14 @@
                 .onSnapshot((snapshot) => {
                     const list = document.getElementById('smoke-list');
                     list.innerHTML = '';
+                    currentTotalStock = 0;
+
                     if(snapshot.empty) { list.innerHTML = `<div class="text-center text-gray-300 text-sm mt-10">暫無品牌</div>`; return; }
 
                     snapshot.forEach(doc => {
                         const d = doc.data();
+                        currentTotalStock += (d.stock || 0);
+                        
                         const todayStr = getLogicalDateStr();
                         let displayToday = d.todayCount || 0;
                         if(d.lastUpdated !== todayStr) displayToday = 0;
@@ -395,7 +408,7 @@
             if(newToday < 0) return;
             if(delta > 0 && currentStock <= 0) { alert("沒菸了！"); return; }
             db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: newStock, todayCount: newToday, lastUpdated: todayStr });
-            logHistory(brandName, delta, newStock); // 傳入最新庫存
+            logHistory(brandName, delta, newStock); 
         }
         function openNewPack(id, brandName, currentStock) {
             const newStock = currentStock + 20;
@@ -403,13 +416,12 @@
             logPackOpen(brandName, newStock);
         }
         
-        // 🔥 紀錄歷史 (紀錄各品牌庫存)
         function logHistory(brandName, delta, newStock) {
             const todayStr = getLogicalDateStr();
             const logRef = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(todayStr);
             const updateData = { total: firebase.firestore.FieldValue.increment(delta), date: todayStr };
             updateData[`details.${brandName}`] = firebase.firestore.FieldValue.increment(delta);
-            updateData[`stocks.${brandName}`] = newStock; // 紀錄當下該品牌庫存
+            updateData[`stocks.${brandName}`] = newStock;
             logRef.set(updateData, { merge: true });
         }
         function logPackOpen(brandName, newStock) {
@@ -420,7 +432,6 @@
             logRef.set(updateData, { merge: true });
         }
         
-        // 顯示歷史 (權限修正：女生可編輯，顯示各品牌庫存)
         function showGlobalHistory() {
             const modal = document.getElementById('modal-history');
             const list = document.getElementById('hist-list');
@@ -436,10 +447,9 @@
                     const date = d.id;
                     const total = d.total || 0;
                     const details = d.details || {};
-                    const stocks = d.stocks || {}; // 讀取庫存紀錄
+                    const stocks = d.stocks || {}; 
                     const packs = d.packsOpened || [];
                     
-                    // 組合詳情：品牌:數量 (剩餘量)
                     let detailStr = Object.entries(details).map(([k, v]) => {
                         const stockInfo = stocks[k] !== undefined ? ` <span class='text-gray-300'>(庫存 ${stocks[k]})</span>` : '';
                         return `${k}: ${v}${stockInfo}`;
@@ -448,7 +458,6 @@
                     let packStr = packs.length > 0 ? `<div class="text-[10px] text-[#84A98C] mt-1"><i class="fa-solid fa-box-open"></i> 開了: ${packs.join(', ')}</div>` : '';
                     if(!detailStr) detailStr = "無詳細資料";
                     
-                    // 🔥 權限控制：只有女生 (Girl) 可以看到修改按鈕
                     let editBtn = '';
                     if (myRole === 'Girl') {
                         editBtn = `<button onclick="editHistoryLog('${date}', ${total})" class="ml-2 text-gray-300 hover:text-[#84A98C]"><i class="fa-solid fa-pen text-xs"></i></button>`;
@@ -489,22 +498,49 @@
         function switchView(role) { currentView = role; initListener(); }
         function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
         
-        function openModal(id, title, amt, type, category) {
-            document.getElementById('modal-add').style.display='flex'; document.getElementById('modal-who').innerText = myRole;
-            const btnDel = document.getElementById('btn-delete'); const btnSub = document.getElementById('btn-submit');
+        // --- 修正後的 openModal ---
+        function openModal(id = null) {
+            document.getElementById('modal-add').style.display='flex'; 
+            
+            const btnDel = document.getElementById('btn-delete'); 
+            const btnSub = document.getElementById('btn-submit');
+            
+            // 重置按鈕狀態 (先隱藏垃圾桶)
+            btnDel.classList.add('hidden');
+            btnDel.classList.remove('flex');
+
             if(!id) {
-                editingId=null; document.getElementById('modal-title').innerText="記一筆";
-                btnDel.style.display='none'; btnSub.innerText="儲存"; btnSub.style.display='block';
+                // 新增模式 (Add)
+                editingId = null; 
+                document.getElementById('input-amount').value = '';
+                document.getElementById('input-title').value = '';
+                btnSub.innerText="儲存"; 
+                btnSub.style.display='block';
                 setType('expense'); selectCategory('breakfast');
             } else {
-                editingId=id; document.getElementById('input-title').value=title; document.getElementById('input-amount').value=amt; 
-                setType(type); selectCategory(category || 'others');
-                document.getElementById('modal-title').innerText="編輯";
-                // 🔥 刪除按鈕邏輯：只要是自己的紀錄，或是看自己介面時，就可以刪除
-                if(currentView===myRole){ btnSub.style.display='block'; btnDel.style.display='flex'; btnSub.innerText="更新"; } 
-                else { btnSub.style.display='none'; btnDel.style.display='none'; }
+                // 編輯模式 (Edit)
+                const d = transactionsData[id];
+                if(d) {
+                    editingId = id; 
+                    document.getElementById('input-title').value = d.title || ''; 
+                    document.getElementById('input-amount').value = d.amount; 
+                    setType(d.type); 
+                    selectCategory(d.category || 'others');
+                    
+                    if(currentView === myRole){ 
+                        btnSub.style.display='block'; 
+                        // 顯示垃圾桶
+                        btnDel.classList.remove('hidden'); 
+                        btnDel.classList.add('flex'); 
+                        btnSub.innerText="更新"; 
+                    } 
+                    else { 
+                        btnSub.style.display='none'; 
+                    }
+                }
             }
         }
+        
         function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
         
         function setType(t) { 
