@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳本 (完美修復版)</title>
+    <title>記帳本 (月份查詢版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,6 +29,9 @@
         .cat-item { transition: all 0.2s; border: 2px solid transparent; }
         .cat-item.active { border-color: #84A98C; background-color: #E9F5DB; color: #52796F; transform: scale(1.05); }
         .cat-item.active-income { border-color: #8ECAE6; background-color: #E0F4FF; color: #219EBC; transform: scale(1.05); }
+        
+        /* 月份選擇器樣式 */
+        input[type="month"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -77,13 +80,21 @@
                         </button>
                     </div>
                 </div>
-                <div class="flex justify-center gap-8 mb-6">
+                
+                <div class="flex justify-center gap-8 mb-4">
                     <div onclick="switchView('Boy')" id="avatar-Boy" class="opacity-50 transition transform scale-90 flex flex-col items-center cursor-pointer">
                         <div class="w-14 h-14 rounded-full border-2 border-[#84A98C] p-1"><div class="w-full h-full bg-[#84A98C] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person"></i></div></div>
                     </div>
                     <div onclick="switchView('Girl')" id="avatar-Girl" class="opacity-50 transition transform scale-90 flex flex-col items-center cursor-pointer">
                         <div class="w-14 h-14 rounded-full border-2 border-[#E5989B] p-1"><div class="w-full h-full bg-[#E5989B] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person-dress"></i></div></div>
                     </div>
+                </div>
+
+                <!-- 🔥 新增：月份選擇器 -->
+                <div class="flex items-center justify-center gap-4 mb-4">
+                    <button onclick="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                    <input type="month" id="month-picker" onchange="handleMonthChange()" class="bg-transparent text-gray-700 font-bold text-lg text-center w-36 outline-none cursor-pointer">
+                    <button onclick="changeMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                 </div>
                 
                 <div class="text-center">
@@ -152,7 +163,6 @@
                         <button onclick="setType('income')" id="tab-income" class="px-6 py-1.5 rounded-md text-sm font-bold transition text-gray-400">收入</button>
                     </div>
                     <div class="flex gap-3">
-                        <!-- 垃圾桶按鈕 (預設 hidden) -->
                         <button onclick="deleteTransaction()" id="btn-delete" class="hidden text-red-300 hover:text-red-500 w-8 h-8 items-center justify-center"><i class="fa-solid fa-trash-can text-lg"></i></button>
                         <button onclick="closeModal()" class="text-gray-400 w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
@@ -208,7 +218,11 @@
         let editingId = null;
         let sortableInstance = null;
         let currentTotalStock = 0;
-        let transactionsData = {}; // 本地暫存
+        let transactionsData = {}; 
+        let allTransactionsList = []; // 🔥 新增：儲存所有下載下來的資料
+        
+        // 🔥 新增：初始化當前月份 (YYYY-MM)
+        let currentMonthStr = new Date().toISOString().slice(0, 7);
 
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
@@ -245,6 +259,8 @@
 
         function initApp() {
             if (myRoomId === ALLOWED_ID && myRole) {
+                // 初始化日期選擇器
+                document.getElementById('month-picker').value = currentMonthStr;
                 showPage('page-main'); initListener(); initSmokeListener(); 
             } else if (myRoomId === ALLOWED_ID) {
                 showPage('page-role');
@@ -269,58 +285,109 @@
         }
         function loginSuccess(id) { localStorage.setItem('myRoomId', id); myRoomId = id; showPage('page-role'); }
 
+        // 🔥 新增：切換月份功能
+        function changeMonth(delta) {
+            const parts = currentMonthStr.split('-');
+            const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1 + delta, 1);
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            currentMonthStr = `${y}-${m}`;
+            document.getElementById('month-picker').value = currentMonthStr;
+            renderCurrentMonth(); // 重新渲染列表
+        }
+
+        function handleMonthChange() {
+            currentMonthStr = document.getElementById('month-picker').value;
+            renderCurrentMonth();
+        }
+
+        // 監聽器：只負責抓資料，不負責渲染 HTML
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
             unsubscribe = db.collection("rooms").doc(myRoomId).collection("transactions")
                 .where("who", "==", currentView)
                 .onSnapshot((snapshot) => {
-                    const list = document.getElementById('tx-list');
-                    list.innerHTML = '';
-                    let total = 0; let totalIncome = 0; let totalExpense = 0;
-                    if(snapshot.empty) list.innerHTML = '<div class="text-center text-gray-300 text-xs mt-10">還沒有記帳，點擊 + 新增</div>';
+                    allTransactionsList = [];
+                    transactionsData = {};
                     
-                    let docs = [];
                     snapshot.forEach(doc => {
                         const d = doc.data();
                         const id = doc.id;
-                        docs.push({ id, ...d });
+                        allTransactionsList.push({ id, ...d });
                         transactionsData[id] = d; 
                     });
                     
-                    docs.sort((a, b) => { let t1 = a.timestamp?a.timestamp.seconds:0; let t2 = b.timestamp?b.timestamp.seconds:0; return t2-t1; });
-                    
-                    docs.forEach(d => {
-                        const isExp = d.type === 'expense';
-                        const amt = Number(d.amount);
-                        if(isExp) { total -= amt; totalExpense += amt; } else { total += amt; totalIncome += amt; }
-                        let timeStr = "";
-                        if(d.timestamp) {
-                            const date = d.timestamp.toDate();
-                            const mm = (date.getMonth()+1).toString().padStart(2,'0'); const dd = date.getDate().toString().padStart(2,'0');
-                            const hh = date.getHours().toString().padStart(2,'0'); const min = date.getMinutes().toString().padStart(2,'0');
-                            timeStr = `${mm}/${dd} ${hh}:${min}`;
-                        }
-                        const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
-                        const catList = CATEGORIES[d.type] || CATEGORIES.expense;
-                        const catObj = catList.find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
-                        const displayTitle = d.title ? d.title : catObj.name;
-                        
-                        list.innerHTML += `
-                        <div onclick="openModal('${d.id}')" 
-                             class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full ${isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#E0F4FF] text-[#84A98C]'} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
-                                <div><p class="font-bold text-gray-700">${displayTitle}</p><p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p></div>
-                            </div>
-                            <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
-                        </div>`;
+                    // 按時間倒序
+                    allTransactionsList.sort((a, b) => { 
+                        let t1 = a.timestamp ? a.timestamp.seconds : 0; 
+                        let t2 = b.timestamp ? b.timestamp.seconds : 0; 
+                        return t2 - t1; 
                     });
-                    document.getElementById('total-balance').innerText = total;
-                    document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#84A98C' : '#E5989B';
-                    document.getElementById('total-income').innerText = totalIncome;
-                    document.getElementById('total-expense').innerText = totalExpense;
+
+                    // 🔥 抓到資料後，執行渲染
+                    renderCurrentMonth();
                 });
+        }
+
+        // 🔥 新增：根據 currentMonthStr 篩選並顯示資料
+        function renderCurrentMonth() {
+            const list = document.getElementById('tx-list');
+            list.innerHTML = '';
+            
+            let total = 0; 
+            let totalIncome = 0; 
+            let totalExpense = 0;
+            
+            // 篩選出符合當前月份的資料
+            const filteredDocs = allTransactionsList.filter(d => {
+                if(!d.timestamp) return false;
+                const date = d.timestamp.toDate();
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                return `${y}-${m}` === currentMonthStr;
+            });
+
+            if(filteredDocs.length === 0) {
+                list.innerHTML = `<div class="text-center text-gray-300 text-xs mt-10">${currentMonthStr} 沒有紀錄</div>`;
+            }
+
+            filteredDocs.forEach(d => {
+                const isExp = d.type === 'expense';
+                const amt = Number(d.amount);
+                
+                if(isExp) { total -= amt; totalExpense += amt; } 
+                else { total += amt; totalIncome += amt; }
+                
+                let timeStr = "";
+                if(d.timestamp) {
+                    const date = d.timestamp.toDate();
+                    const mm = (date.getMonth()+1).toString().padStart(2,'0'); 
+                    const dd = date.getDate().toString().padStart(2,'0');
+                    const hh = date.getHours().toString().padStart(2,'0'); 
+                    const min = date.getMinutes().toString().padStart(2,'0');
+                    timeStr = `${mm}/${dd} ${hh}:${min}`;
+                }
+                const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
+                const catList = CATEGORIES[d.type] || CATEGORIES.expense;
+                const catObj = catList.find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
+                const displayTitle = d.title ? d.title : catObj.name;
+                
+                list.innerHTML += `
+                <div onclick="openModal('${d.id}')" 
+                     class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full ${isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#E0F4FF] text-[#84A98C]'} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
+                        <div><p class="font-bold text-gray-700">${displayTitle}</p><p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p></div>
+                    </div>
+                    <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
+                </div>`;
+            });
+
+            document.getElementById('total-balance').innerText = total;
+            document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#84A98C' : '#E5989B';
+            document.getElementById('total-income').innerText = totalIncome;
+            document.getElementById('total-expense').innerText = totalExpense;
         }
 
         function initSmokeListener() {
@@ -498,7 +565,6 @@
         function switchView(role) { currentView = role; initListener(); }
         function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
         
-        // --- 修正後的 openModal ---
         function openModal(id = null) {
             document.getElementById('modal-add').style.display='flex'; 
             
