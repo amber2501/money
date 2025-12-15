@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳本 (月份查詢版)</title>
+    <title>記帳本 (每日分頁版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -18,7 +18,11 @@
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #eee; touch-action: manipulation; }
         .app-container { font-family: 'Quicksand', 'Noto Sans TC', sans-serif; background-color: #F9F9F7; max-width: 450px; margin: 0 auto; height: 100vh; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* 隱藏滾動條但保留功能 */
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
         .soft-shadow { box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .page { display: none; height: 100%; width: 100%; flex-direction: column; }
         .page.active { display: flex; }
@@ -30,8 +34,12 @@
         .cat-item.active { border-color: #84A98C; background-color: #E9F5DB; color: #52796F; transform: scale(1.05); }
         .cat-item.active-income { border-color: #8ECAE6; background-color: #E0F4FF; color: #219EBC; transform: scale(1.05); }
         
-        /* 月份選擇器樣式 */
-        input[type="month"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+        input[type="month"]::-webkit-calendar-picker-indicator,
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+
+        /* 日期選擇條樣式 */
+        .day-pill { transition: all 0.2s; min-width: 48px; }
+        .day-pill.active { background-color: #84A98C; color: white; box-shadow: 0 4px 10px rgba(132, 169, 140, 0.4); transform: scale(1.05); border-color: transparent; }
     </style>
 </head>
 <body>
@@ -68,7 +76,7 @@
 
         <!-- 3. 主畫面 -->
         <div id="page-main" class="page relative">
-            <header class="pt-10 pb-6 px-6 bg-white rounded-b-[35px] soft-shadow z-10 relative">
+            <header class="pt-10 pb-2 px-6 bg-white rounded-b-[35px] soft-shadow z-10 relative">
                 <div class="flex justify-between items-center mb-4">
                     <div class="text-xs font-bold text-gray-400 tracking-widest">記帳本</div>
                     <div class="flex gap-4 items-center">
@@ -90,14 +98,14 @@
                     </div>
                 </div>
 
-                <!-- 🔥 新增：月份選擇器 -->
+                <!-- 月份選擇器 -->
                 <div class="flex items-center justify-center gap-4 mb-4">
                     <button onclick="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95"><i class="fa-solid fa-chevron-left text-xs"></i></button>
                     <input type="month" id="month-picker" onchange="handleMonthChange()" class="bg-transparent text-gray-700 font-bold text-lg text-center w-36 outline-none cursor-pointer">
                     <button onclick="changeMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                 </div>
                 
-                <div class="text-center">
+                <div class="text-center mb-6">
                     <p class="text-xs text-gray-400 mb-1">本月結餘</p>
                     <h1 id="total-balance" class="text-4xl font-bold text-gray-700 mb-4">0</h1>
                     <div class="flex justify-center gap-4 px-4">
@@ -111,9 +119,14 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 🔥 新增：橫向日曆選擇條 -->
+                <div id="day-bar" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 px-1 mb-2">
+                    <!-- Javascript 將自動產生內容 -->
+                </div>
             </header>
             
-            <main id="tx-list" class="flex-1 overflow-y-auto no-scrollbar px-5 pt-4 pb-24 space-y-3">
+            <main id="tx-list" class="flex-1 overflow-y-auto no-scrollbar px-5 pt-2 pb-24 space-y-1">
                 <div class="text-center text-gray-300 text-xs mt-10">載入中...</div>
             </main>
 
@@ -167,10 +180,18 @@
                         <button onclick="closeModal()" class="text-gray-400 w-8 h-8 flex items-center justify-center"><i class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
                 </div>
-                <div class="mb-4">
-                    <p class="text-xs text-gray-400 mb-1 ml-1">金額</p>
-                    <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-2xl text-4xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#84A98C]/20 transition" placeholder="0">
+                
+                <div class="mb-4 space-y-3">
+                    <div>
+                        <p class="text-xs text-gray-400 mb-1 ml-1">金額</p>
+                        <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-2xl text-4xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#84A98C]/20 transition" placeholder="0">
+                    </div>
+                    <div class="flex items-center bg-gray-50 rounded-xl px-4 py-2 border border-transparent focus-within:border-[#84A98C]/50 transition">
+                        <span class="text-xs text-gray-400 whitespace-nowrap mr-3"><i class="fa-regular fa-calendar"></i> 日期</span>
+                        <input type="date" id="input-date" class="bg-transparent text-gray-700 font-bold outline-none flex-1 text-right">
+                    </div>
                 </div>
+
                 <div class="flex-1 overflow-y-auto mb-4 no-scrollbar">
                     <p class="text-xs text-gray-400 mb-2 ml-1">選擇類別</p>
                     <div id="category-grid" class="grid grid-cols-4 gap-3 mb-2"></div>
@@ -219,10 +240,10 @@
         let sortableInstance = null;
         let currentTotalStock = 0;
         let transactionsData = {}; 
-        let allTransactionsList = []; // 🔥 新增：儲存所有下載下來的資料
+        let allTransactionsList = []; 
         
-        // 🔥 新增：初始化當前月份 (YYYY-MM)
         let currentMonthStr = new Date().toISOString().slice(0, 7);
+        let currentDayFilter = null; // null = 全部, 數字 = 特定日期
 
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
@@ -259,9 +280,9 @@
 
         function initApp() {
             if (myRoomId === ALLOWED_ID && myRole) {
-                // 初始化日期選擇器
                 document.getElementById('month-picker').value = currentMonthStr;
                 showPage('page-main'); initListener(); initSmokeListener(); 
+                renderDayBar(); // 初始化日曆條
             } else if (myRoomId === ALLOWED_ID) {
                 showPage('page-role');
             } else {
@@ -285,7 +306,6 @@
         }
         function loginSuccess(id) { localStorage.setItem('myRoomId', id); myRoomId = id; showPage('page-role'); }
 
-        // 🔥 新增：切換月份功能
         function changeMonth(delta) {
             const parts = currentMonthStr.split('-');
             const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1 + delta, 1);
@@ -293,15 +313,58 @@
             const m = String(date.getMonth() + 1).padStart(2, '0');
             currentMonthStr = `${y}-${m}`;
             document.getElementById('month-picker').value = currentMonthStr;
-            renderCurrentMonth(); // 重新渲染列表
+            currentDayFilter = null; // 切換月份時，重置為顯示全部
+            renderDayBar();
+            renderCurrentMonth();
         }
 
         function handleMonthChange() {
             currentMonthStr = document.getElementById('month-picker').value;
+            currentDayFilter = null;
+            renderDayBar();
             renderCurrentMonth();
         }
 
-        // 監聽器：只負責抓資料，不負責渲染 HTML
+        // 🔥 新增：產生橫向日曆條
+        function renderDayBar() {
+            const bar = document.getElementById('day-bar');
+            bar.innerHTML = '';
+            
+            // 取得當月天數
+            const parts = currentMonthStr.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            // 1. 全部按鈕
+            const allActive = currentDayFilter === null ? 'active' : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50';
+            bar.innerHTML += `
+                <button onclick="selectDay(null)" class="day-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap ${allActive}">
+                    全部
+                </button>`;
+
+            // 2. 每天的按鈕
+            const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+            for(let d = 1; d <= daysInMonth; d++) {
+                const dateObj = new Date(year, month - 1, d);
+                const dayName = weekDays[dateObj.getDay()];
+                const isActive = currentDayFilter === d ? 'active' : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50';
+                
+                bar.innerHTML += `
+                    <button onclick="selectDay(${d})" class="day-pill px-3 py-2 rounded-2xl flex flex-col items-center justify-center gap-0.5 ${isActive}">
+                        <span class="text-[10px] opacity-70">${dayName}</span>
+                        <span class="text-sm font-bold leading-none">${d}</span>
+                    </button>`;
+            }
+        }
+
+        // 🔥 新增：選擇日期
+        function selectDay(day) {
+            currentDayFilter = day;
+            renderDayBar();
+            renderCurrentMonth();
+        }
+
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
@@ -318,19 +381,16 @@
                         transactionsData[id] = d; 
                     });
                     
-                    // 按時間倒序
                     allTransactionsList.sort((a, b) => { 
                         let t1 = a.timestamp ? a.timestamp.seconds : 0; 
                         let t2 = b.timestamp ? b.timestamp.seconds : 0; 
                         return t2 - t1; 
                     });
 
-                    // 🔥 抓到資料後，執行渲染
                     renderCurrentMonth();
                 });
         }
 
-        // 🔥 新增：根據 currentMonthStr 篩選並顯示資料
         function renderCurrentMonth() {
             const list = document.getElementById('tx-list');
             list.innerHTML = '';
@@ -339,8 +399,8 @@
             let totalIncome = 0; 
             let totalExpense = 0;
             
-            // 篩選出符合當前月份的資料
-            const filteredDocs = allTransactionsList.filter(d => {
+            // 篩選月份
+            let filteredDocs = allTransactionsList.filter(d => {
                 if(!d.timestamp) return false;
                 const date = d.timestamp.toDate();
                 const y = date.getFullYear();
@@ -348,26 +408,59 @@
                 return `${y}-${m}` === currentMonthStr;
             });
 
-            if(filteredDocs.length === 0) {
-                list.innerHTML = `<div class="text-center text-gray-300 text-xs mt-10">${currentMonthStr} 沒有紀錄</div>`;
+            // 計算整月總額 (不受日期篩選影響，保持上方大數字為月結)
+            filteredDocs.forEach(d => {
+                const amt = Number(d.amount);
+                if(d.type === 'expense') { total -= amt; totalExpense += amt; } 
+                else { total += amt; totalIncome += amt; }
+            });
+            document.getElementById('total-balance').innerText = total;
+            document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#84A98C' : '#E5989B';
+            document.getElementById('total-income').innerText = totalIncome;
+            document.getElementById('total-expense').innerText = totalExpense;
+
+            // 🔥 二次篩選：如果選了特定日期，列表只顯示那天
+            if (currentDayFilter !== null) {
+                filteredDocs = filteredDocs.filter(d => {
+                    const date = d.timestamp.toDate();
+                    return date.getDate() === currentDayFilter;
+                });
             }
+
+            if(filteredDocs.length === 0) {
+                const tipText = currentDayFilter ? `${currentDayFilter}號 沒有紀錄` : `${currentMonthStr} 沒有紀錄`;
+                list.innerHTML = `<div class="text-center text-gray-300 text-xs mt-10">${tipText}</div>`;
+            }
+
+            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            let lastDateStr = '';
 
             filteredDocs.forEach(d => {
                 const isExp = d.type === 'expense';
                 const amt = Number(d.amount);
                 
-                if(isExp) { total -= amt; totalExpense += amt; } 
-                else { total += amt; totalIncome += amt; }
-                
                 let timeStr = "";
+                let dateHeader = "";
+
                 if(d.timestamp) {
                     const date = d.timestamp.toDate();
-                    const mm = (date.getMonth()+1).toString().padStart(2,'0'); 
-                    const dd = date.getDate().toString().padStart(2,'0');
+                    const mm = (date.getMonth()+1).toString(); 
+                    const dd = date.getDate().toString();
+                    const day = weekDays[date.getDay()];
+                    
+                    const currentDateStr = `${mm}月${dd}日 ${day}`;
+
+                    // 如果是顯示「全部」，才需要日期標題
+                    if (currentDayFilter === null && currentDateStr !== lastDateStr) {
+                        list.innerHTML += `<div class="text-xs text-gray-400 font-bold mt-4 mb-2 ml-2 pl-2 border-l-2 border-[#84A98C]">${currentDateStr}</div>`;
+                        lastDateStr = currentDateStr;
+                    }
+
                     const hh = date.getHours().toString().padStart(2,'0'); 
                     const min = date.getMinutes().toString().padStart(2,'0');
-                    timeStr = `${mm}/${dd} ${hh}:${min}`;
+                    timeStr = `${hh}:${min}`;
                 }
+
                 const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
                 const catList = CATEGORIES[d.type] || CATEGORIES.expense;
                 const catObj = catList.find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
@@ -376,18 +469,13 @@
                 list.innerHTML += `
                 <div onclick="openModal('${d.id}')" 
                      class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full ${isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#E0F4FF] text-[#84A98C]'} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
-                        <div><p class="font-bold text-gray-700">${displayTitle}</p><p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p></div>
-                    </div>
-                    <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full ${isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#E0F4FF] text-[#84A98C]'} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
+                                <div><p class="font-bold text-gray-700">${displayTitle}</p><p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p></div>
+                            </div>
+                            <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
                 </div>`;
             });
-
-            document.getElementById('total-balance').innerText = total;
-            document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#84A98C' : '#E5989B';
-            document.getElementById('total-income').innerText = totalIncome;
-            document.getElementById('total-expense').innerText = totalExpense;
         }
 
         function initSmokeListener() {
@@ -548,15 +636,37 @@
         function saveTransaction() {
             const amt = document.getElementById('input-amount').value;
             const title = document.getElementById('input-title').value;
+            const dateStr = document.getElementById('input-date').value; 
+            
             if(!amt) return alert("請輸入金額");
+            if(!dateStr) return alert("請選擇日期");
             if (currentCategory === 'others' && !title) return alert("請輸入項目名稱");
+            
             const collectionRef = db.collection("rooms").doc(myRoomId).collection("transactions");
             const btn = document.getElementById('btn-submit');
             btn.innerText = "處理中...";
-            const data = { who: myRole, amount: Number(amt), title: title, type: currentType, category: currentCategory };
+
+            const now = new Date();
+            let finalDate = new Date(dateStr);
+            finalDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+            const timestamp = firebase.firestore.Timestamp.fromDate(finalDate);
+
+            const data = { 
+                who: myRole, 
+                amount: Number(amt), 
+                title: title, 
+                type: currentType, 
+                category: currentCategory,
+                timestamp: timestamp 
+            };
+            
             const onComplete = () => { closeModal(); btn.innerText = "儲存"; document.getElementById('input-amount').value = ''; document.getElementById('input-title').value = ''; };
-            if (editingId) collectionRef.doc(editingId).update(data).then(onComplete).catch(() => btn.innerText = "儲存");
-            else { data.timestamp = firebase.firestore.FieldValue.serverTimestamp(); collectionRef.add(data).then(onComplete).catch(() => btn.innerText = "儲存"); }
+            
+            if (editingId) {
+                collectionRef.doc(editingId).update(data).then(onComplete).catch(() => btn.innerText = "儲存");
+            } else { 
+                collectionRef.add(data).then(onComplete).catch(() => btn.innerText = "儲存"); 
+            }
         }
         function deleteTransaction() { if(editingId && confirm("刪除此紀錄？")) db.collection("rooms").doc(myRoomId).collection("transactions").doc(editingId).delete().then(() => closeModal()); }
 
@@ -576,26 +686,41 @@
             btnDel.classList.remove('flex');
 
             if(!id) {
-                // 新增模式 (Add)
+                // 新增模式
                 editingId = null; 
                 document.getElementById('input-amount').value = '';
                 document.getElementById('input-title').value = '';
+                
+                const today = new Date();
+                const y = today.getFullYear();
+                const m = String(today.getMonth() + 1).padStart(2, '0');
+                const d = String(today.getDate()).padStart(2, '0');
+                document.getElementById('input-date').value = `${y}-${m}-${d}`;
+
                 btnSub.innerText="儲存"; 
                 btnSub.style.display='block';
                 setType('expense'); selectCategory('breakfast');
             } else {
-                // 編輯模式 (Edit)
+                // 編輯模式
                 const d = transactionsData[id];
                 if(d) {
                     editingId = id; 
                     document.getElementById('input-title').value = d.title || ''; 
                     document.getElementById('input-amount').value = d.amount; 
+                    
+                    if(d.timestamp) {
+                        const date = d.timestamp.toDate();
+                        const y = date.getFullYear();
+                        const m = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        document.getElementById('input-date').value = `${y}-${m}-${day}`;
+                    }
+
                     setType(d.type); 
                     selectCategory(d.category || 'others');
                     
                     if(currentView === myRole){ 
                         btnSub.style.display='block'; 
-                        // 顯示垃圾桶
                         btnDel.classList.remove('hidden'); 
                         btnDel.classList.add('flex'); 
                         btnSub.innerText="更新"; 
