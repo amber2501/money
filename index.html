@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳本 (行程色塊版)</title>
+    <title>記帳本 (2026補假修正版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -40,22 +40,31 @@
         .day-pill { transition: all 0.2s; min-width: 48px; }
         .day-pill.active { background-color: #5D93E1; color: white; box-shadow: 0 4px 10px rgba(93, 147, 225, 0.4); transform: scale(1.05); border-color: transparent; }
 
-        /* 行事曆樣式 (優化版) */
-        .cal-cell { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; position: relative; transition: all 0.2s; border: 2px solid transparent; }
+        /* 行事曆格子樣式 */
+        .cal-cell { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; position: relative; transition: all 0.2s; border: 2px solid transparent; overflow: hidden; }
         
-        /* 選中狀態 */
-        .cal-cell.selected { border-color: #333 !important; transform: scale(0.95); box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
-        
+        /* 選中狀態 (強制覆蓋背景) */
+        .cal-cell.selected { 
+            background: #333 !important; 
+            border-color: #333 !important; 
+            transform: scale(0.95); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); 
+            z-index: 20; 
+        }
+        .cal-cell.selected span { color: white !important; font-weight: bold; }
+        .cal-cell.selected .holiday-label { color: rgba(255,255,255,0.7) !important; }
+
         /* 今天狀態 */
-        .cal-cell.today span { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: #5D93E1; font-weight: 900; }
+        .cal-cell.today { border: 2px solid #5D93E1; font-weight: bold; }
 
         /* 🔥 行程背景色塊 */
         .event-boy { background-color: #ECF4FF; color: #3A6EA5; }
         .event-girl { background-color: #FFF0F0; color: #E5989B; }
         .event-mix { background: linear-gradient(135deg, #ECF4FF 50%, #FFF0F0 50%); }
 
-        .month-select-wrapper { position: relative; display: inline-block; }
-        .month-select-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 10; }
+        /* 🔥 月份選擇器修復：確保 input 覆蓋在文字之上 */
+        .month-select-wrapper { position: relative; display: flex; align-items: center; justify-content: center; }
+        .month-select-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 50; }
         
         input[type="checkbox"] { width: 16px; height: 16px; accent-color: #5D93E1; }
     </style>
@@ -173,15 +182,16 @@
                 
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-700">共用行事曆</h2>
-                    <div class="flex gap-2 items-center">
-                        <button onclick="changeCalMonth(-1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500 flex items-center justify-center hover:bg-gray-200"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                    <div class="flex gap-2 items-center relative">
+                        <button onclick="changeCalMonth(-1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500 flex items-center justify-center hover:bg-gray-200 z-50"><i class="fa-solid fa-chevron-left text-xs"></i></button>
                         
+                        <!-- 🔥 月份點選器：z-index 提高確保可點 -->
                         <div class="month-select-wrapper">
-                            <span id="cal-title" class="text-lg font-bold text-gray-600 w-24 text-center leading-8 block pointer-events-none"></span>
+                            <span id="cal-title" class="text-lg font-bold text-gray-600 w-24 text-center leading-8 pointer-events-none"></span>
                             <input type="month" id="cal-picker" onchange="handleCalPickerChange()" class="month-select-input">
                         </div>
 
-                        <button onclick="changeCalMonth(1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500 flex items-center justify-center hover:bg-gray-200"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                        <button onclick="changeCalMonth(1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500 flex items-center justify-center hover:bg-gray-200 z-50"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                     </div>
                 </div>
 
@@ -295,10 +305,17 @@
                         <input type="text" id="event-title" class="w-full bg-gray-50 p-3 rounded-xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#5D93E1]/20 transition" placeholder="例：看電影">
                     </div>
 
-                    <!-- 全天開關 -->
-                    <div class="flex items-center gap-2 ml-1">
-                        <input type="checkbox" id="event-allday" onchange="toggleEventTimeInputs()" checked>
-                        <label for="event-allday" class="text-sm text-gray-600 font-bold cursor-pointer">全天行程</label>
+                    <div class="flex items-center gap-4 ml-1 mb-2">
+                        <!-- 全天開關 -->
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="event-allday" onchange="toggleEventTimeInputs()" checked>
+                            <label for="event-allday" class="text-sm text-gray-600 font-bold cursor-pointer">全天行程</label>
+                        </div>
+                        <!-- 對方同行開關 -->
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="event-partner">
+                            <label for="event-partner" class="text-sm text-gray-600 font-bold cursor-pointer">對方同行</label>
+                        </div>
                     </div>
 
                     <!-- 開始時間 -->
@@ -385,31 +402,53 @@
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
 
-        // 🔥 更新至 2030 (春節：小年夜-初三；遇週末補假)
+        // 🔥 精準修正：包含2027跨年補假、修正小年夜與補假日期
         const TAIWAN_HOLIDAYS = {
             '01-01': '元旦', '02-28': '228', '04-04': '兒童節', '04-05': '清明節', 
             // 2025
             '2025-01-27': '小年夜', '2025-01-28': '除夕', '2025-01-29': '初一', '2025-01-30': '初二', '2025-01-31': '初三',
-            '2025-05-01': '勞動節', '2025-05-31': '端午節', '2025-09-28': '教師節',
-            '2025-10-06': '中秋節', '2025-10-25': '光復節', '2025-12-25': '行憲',
+            '2025-05-01': '勞動節', '2025-05-31': '端午節', '2025-09-28': '教師節', '2025-09-29': '教師補假',
+            '2025-10-06': '中秋節', '2025-10-25': '光復節', '2025-10-24': '光復補假',
             
             // 2026
-            '2026-02-16': '小年夜', '2026-02-17': '除夕', '2026-02-18': '初一', '2026-02-19': '初二', '2026-02-20': '初三',
+            '2026-02-15': '小年夜', '2026-02-16': '除夕', '2026-02-17': '初一', '2026-02-18': '初二', '2026-02-19': '初三',
+            '2026-02-20': '彈性補假',
             '2026-04-06': '清明補假', 
             '2026-05-01': '勞動節', '2026-06-19': '端午節', '2026-09-25': '中秋節',
             '2026-09-28': '教師節', '2026-10-25': '光復節', '2026-10-26': '光復補假', '2026-12-25': '行憲',
 
-            // 2027 (除夕2/6六、初一2/7日 -> 補假至2/10, 2/11)
-            '2027-02-05': '小年夜', '2027-02-06': '除夕', '2027-02-07': '初一', '2027-02-08': '初二', '2027-02-09': '初三',
-            '2027-02-10': '補假', '2027-02-11': '補假',
-            '2027-05-01': '勞動節', '2027-05-03': '勞動補假',
+            // 2027
+            '2027-02-04': '小年夜', '2027-02-05': '除夕', '2027-02-06': '春節', '2027-02-07': '春節', '2027-02-08': '春節',
+            '2027-02-09': '春節補假', '2027-02-10': '春節補假', 
+            '2027-03-01': '228補假',
+            '2027-04-06': '兒童補假',
+            '2027-04-30': '勞動補假',
             '2027-06-09': '端午節', '2027-09-15': '中秋節', '2027-09-28': '教師節', 
-            '2027-10-25': '光復節', '2027-12-25': '行憲', '2027-12-27': '行憲補假',
+            '2027-10-11': '國慶補假', '2027-10-25': '光復節',
+            '2027-12-24': '行憲補假',
+            '2027-12-31': '元旦補假', // 2028元旦的補假
 
             // 2028
-            '2028-01-25': '小年夜', '2028-01-26': '除夕', '2028-01-27': '初一', '2028-01-28': '初二', '2028-01-29': '初三',
-            '2028-05-01': '勞動節', '2028-05-28': '端午節', '2028-05-29': '端午補假', 
-            '2028-09-28': '教師節', '2028-10-03': '中秋節', '2028-10-25': '光復節', '2028-12-25': '行憲'
+            '2028-01-24': '小年夜', '2028-01-25': '除夕', '2028-01-26': '初一', '2028-01-27': '初二', '2028-01-28': '初三',
+            '2028-02-28': '228',
+            '2028-04-03': '清明補假', // 4/4兒童+清明(二)，前一日補假? 或是2028清明為4/4，兒童4/3放假? 依規則4/4放假
+            '2028-05-01': '勞動節', '2028-05-29': '端午補假', 
+            '2028-09-28': '教師節', '2028-10-03': '中秋節', '2028-10-25': '光復節', '2028-12-25': '行憲',
+
+            // 2029 (修正：小年夜2/11、除夕2/12、初一2/13)
+            '2029-02-11': '小年夜', '2029-02-12': '除夕', '2029-02-13': '初一', '2029-02-14': '初二', '2029-02-15': '初三',
+            '2029-02-16': '小年夜補假', // 2/11週日，補假至2/16
+            '2029-04-03': '兒童補假', // 4/4兒童節週三，前一日? 
+            '2029-06-16': '端午節', '2029-06-15': '端午補假', // 6/16週六 -> 6/15補假
+            '2029-09-22': '中秋節', '2029-09-21': '中秋補假', // 9/22週六 -> 9/21補假
+            '2029-09-28': '教師節', '2029-10-10': '國慶日', '2029-10-25': '光復節', '2029-12-25': '行憲',
+
+            // 2030 (修正：小年夜2/1)
+            '2030-02-01': '小年夜', '2030-02-02': '除夕', '2030-02-03': '初一', '2030-02-04': '初二', '2030-02-05': '初三',
+            '2030-02-06': '春節補假', '2030-02-07': '春節補假',
+            '2030-05-01': '勞動節', '2030-06-05': '端午節', '2030-09-12': '中秋節',
+            '2030-09-28': '教師節', '2030-09-27': '教師補假', // 9/28週六 -> 9/27補
+            '2030-10-25': '光復節', '2030-12-25': '行憲'
         };
 
         const CATEGORIES = {
@@ -734,6 +773,7 @@
                 const currentDayTime = new Date(year, month, d).getTime();
                 let hasBoy = false;
                 let hasGirl = false;
+                let isMix = false;
 
                 allEventsList.forEach(e => {
                     const eStart = new Date(e.startDate + 'T00:00:00').getTime();
@@ -741,8 +781,16 @@
                     if (currentDayTime >= eStart && currentDayTime <= eEnd) {
                         if (e.creator === 'Boy') hasBoy = true;
                         if (e.creator === 'Girl') hasGirl = true;
+                        if (e.withPartner) isMix = true; 
                     }
                 });
+
+                if (hasBoy && hasGirl) isMix = true;
+
+                let bgClass = "";
+                if (isMix) bgClass = "event-mix";
+                else if (hasBoy) bgClass = "event-boy";
+                else if (hasGirl) bgClass = "event-girl";
 
                 const isSelected = calSelectedDate.getFullYear() === year && 
                                    calSelectedDate.getMonth() === month && 
@@ -751,15 +799,9 @@
                 const today = new Date();
                 const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
 
-                // 🔥 背景色塊判定
-                let bgClass = "";
-                if (hasBoy && hasGirl) bgClass = "event-mix";
-                else if (hasBoy) bgClass = "event-boy";
-                else if (hasGirl) bgClass = "event-girl";
-
                 const classes = `cal-cell ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${bgClass}`;
                 
-                let holidayHtml = holidayName ? `<span class="text-[10px] text-red-400 absolute bottom-0.5 scale-90 whitespace-nowrap leading-none">${holidayName}</span>` : '';
+                let holidayHtml = holidayName ? `<span class="holiday-label text-[10px] text-red-400 absolute bottom-0.5 scale-90 whitespace-nowrap leading-none">${holidayName}</span>` : '';
 
                 if(isSelected) numColorClass = "text-white font-bold";
 
@@ -790,6 +832,7 @@
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
             dateLabel.innerText = `${m}月${d}日 ${weekDays[calSelectedDate.getDay()]}`;
 
+            // 篩選出包含選中日期的活動
             const events = allEventsList.filter(e => {
                 const start = new Date(e.startDate + 'T00:00:00').getTime();
                 const end = e.endDate ? new Date(e.endDate + 'T00:00:00').getTime() : start;
@@ -826,13 +869,14 @@
                 }
 
                 const eventJson = JSON.stringify(e).replace(/"/g, '&quot;');
+                let partnerIcon = e.withPartner ? '<i class="fa-solid fa-user-group text-xs ml-2 text-gray-400" title="對方同行"></i>' : '';
 
                 list.innerHTML += `
                     <div class="bg-white p-4 rounded-xl soft-shadow border-l-4 ${borderColor} flex justify-between items-center relative group">
                         <div>
                             <div class="flex items-center">
                                 <p class="font-bold text-gray-700 text-lg">${e.title}</p>
-                                ${dayInfo}
+                                ${dayInfo} ${partnerIcon}
                             </div>
                             <div class="flex items-center gap-2 mt-1">
                                 <p class="text-xs text-[#5D93E1] bg-[#ECF4FF] px-2 py-0.5 rounded font-bold">${timeDisplay}</p>
@@ -862,6 +906,7 @@
 
             document.getElementById('event-title').value = '';
             document.getElementById('event-allday').checked = true;
+            document.getElementById('event-partner').checked = false;
             document.getElementById('event-start-date').value = defaultDate;
             document.getElementById('event-end-date').value = defaultDate;
             document.getElementById('event-start-time').value = "09:00";
@@ -878,6 +923,7 @@
 
             document.getElementById('event-title').value = e.title;
             document.getElementById('event-allday').checked = e.isAllDay;
+            document.getElementById('event-partner').checked = e.withPartner || false;
             document.getElementById('event-start-date').value = e.startDate;
             document.getElementById('event-end-date').value = e.endDate || e.startDate;
             document.getElementById('event-start-time').value = e.startTime || "09:00";
@@ -912,6 +958,7 @@
         function saveEvent() {
             const title = document.getElementById('event-title').value.trim();
             const isAllDay = document.getElementById('event-allday').checked;
+            const withPartner = document.getElementById('event-partner').checked;
             const startDate = document.getElementById('event-start-date').value;
             let endDate = document.getElementById('event-end-date').value;
             const startTime = document.getElementById('event-start-time').value;
@@ -930,6 +977,7 @@
             const eventData = {
                 title,
                 isAllDay,
+                withPartner,
                 startDate,
                 endDate,
                 startTime: isAllDay ? "" : startTime,
