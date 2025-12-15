@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳本 (客製化暱稱版)</title>
+    <title>記帳本 (行程色塊版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -40,11 +40,24 @@
         .day-pill { transition: all 0.2s; min-width: 48px; }
         .day-pill.active { background-color: #5D93E1; color: white; box-shadow: 0 4px 10px rgba(93, 147, 225, 0.4); transform: scale(1.05); border-color: transparent; }
 
-        /* 行事曆樣式 */
-        .cal-cell { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4px; border-radius: 50%; cursor: pointer; position: relative; transition: all 0.2s; }
-        .cal-cell.selected { background-color: #333; color: white; }
-        .cal-cell.today { border: 2px solid #5D93E1; font-weight: bold; }
-        .cal-dot { width: 4px; height: 4px; border-radius: 50%; margin: 0 1px; }
+        /* 行事曆樣式 (優化版) */
+        .cal-cell { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; position: relative; transition: all 0.2s; border: 2px solid transparent; }
+        
+        /* 選中狀態 */
+        .cal-cell.selected { border-color: #333 !important; transform: scale(0.95); box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
+        
+        /* 今天狀態 */
+        .cal-cell.today span { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: #5D93E1; font-weight: 900; }
+
+        /* 🔥 行程背景色塊 */
+        .event-boy { background-color: #ECF4FF; color: #3A6EA5; }
+        .event-girl { background-color: #FFF0F0; color: #E5989B; }
+        .event-mix { background: linear-gradient(135deg, #ECF4FF 50%, #FFF0F0 50%); }
+
+        .month-select-wrapper { position: relative; display: inline-block; }
+        .month-select-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 10; }
+        
+        input[type="checkbox"] { width: 16px; height: 16px; accent-color: #5D93E1; }
     </style>
 </head>
 <body>
@@ -98,7 +111,6 @@
                 </div>
                 
                 <div class="flex justify-center gap-8 mb-4">
-                    <!-- 男生頭像區域 (可點擊名字修改) -->
                     <div class="flex flex-col items-center">
                         <div onclick="switchView('Boy')" id="avatar-Boy" class="opacity-50 transition transform scale-90 cursor-pointer mb-1">
                             <div class="w-14 h-14 rounded-full border-2 border-[#5D93E1] p-1"><div class="w-full h-full bg-[#5D93E1] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person"></i></div></div>
@@ -108,7 +120,6 @@
                         </button>
                     </div>
 
-                    <!-- 女生頭像區域 (可點擊名字修改) -->
                     <div class="flex flex-col items-center">
                         <div onclick="switchView('Girl')" id="avatar-Girl" class="opacity-50 transition transform scale-90 cursor-pointer mb-1">
                             <div class="w-14 h-14 rounded-full border-2 border-[#E5989B] p-1"><div class="w-full h-full bg-[#E5989B] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-person-dress"></i></div></div>
@@ -162,10 +173,15 @@
                 
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-gray-700">共用行事曆</h2>
-                    <div class="flex gap-2">
-                        <button onclick="changeCalMonth(-1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500"><i class="fa-solid fa-chevron-left text-xs"></i></button>
-                        <span id="cal-title" class="text-lg font-bold text-gray-600 w-24 text-center leading-8"></span>
-                        <button onclick="changeCalMonth(1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                    <div class="flex gap-2 items-center">
+                        <button onclick="changeCalMonth(-1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500 flex items-center justify-center hover:bg-gray-200"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                        
+                        <div class="month-select-wrapper">
+                            <span id="cal-title" class="text-lg font-bold text-gray-600 w-24 text-center leading-8 block pointer-events-none"></span>
+                            <input type="month" id="cal-picker" onchange="handleCalPickerChange()" class="month-select-input">
+                        </div>
+
+                        <button onclick="changeCalMonth(1)" class="w-8 h-8 bg-gray-100 rounded-full text-gray-500 flex items-center justify-center hover:bg-gray-200"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                     </div>
                 </div>
 
@@ -176,7 +192,7 @@
                     <div class="text-xs text-gray-400">三</div>
                     <div class="text-xs text-gray-400">四</div>
                     <div class="text-xs text-gray-400">五</div>
-                    <div class="text-xs text-gray-400">六</div>
+                    <div class="text-xs text-red-400 font-bold">六</div>
                 </div>
 
                 <div id="cal-grid" class="grid grid-cols-7 gap-y-2 gap-x-1 text-sm text-gray-700 mb-2">
@@ -265,19 +281,52 @@
             </div>
         </div>
 
-        <!-- 7. 行事曆新增彈窗 (改為置中 + 新增關閉按鈕) -->
+        <!-- 7. 行事曆新增/編輯彈窗 -->
         <div id="modal-event" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-center justify-center">
             <div class="bg-white w-[85%] max-w-[350px] rounded-2xl p-6 modal-enter relative flex flex-col shadow-2xl">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-gray-600 text-lg">新增行程</h3>
-                    <!-- 關閉按鈕 -->
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-600 text-lg" id="event-modal-title">新增行程</h3>
                     <button onclick="closeEventModal()" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full transition"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div class="mb-6">
-                    <p class="text-xs text-gray-400 mb-1 ml-1">行程名稱</p>
-                    <input type="text" id="event-title" class="w-full bg-gray-50 p-4 rounded-xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#5D93E1]/20 transition" placeholder="例：看電影">
+                
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <p class="text-xs text-gray-400 mb-1 ml-1">行程名稱</p>
+                        <input type="text" id="event-title" class="w-full bg-gray-50 p-3 rounded-xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#5D93E1]/20 transition" placeholder="例：看電影">
+                    </div>
+
+                    <!-- 全天開關 -->
+                    <div class="flex items-center gap-2 ml-1">
+                        <input type="checkbox" id="event-allday" onchange="toggleEventTimeInputs()" checked>
+                        <label for="event-allday" class="text-sm text-gray-600 font-bold cursor-pointer">全天行程</label>
+                    </div>
+
+                    <!-- 開始時間 -->
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <p class="text-[10px] text-gray-400 mb-1">開始日期</p>
+                            <input type="date" id="event-start-date" onchange="syncEndDate()" class="w-full bg-gray-50 p-2 rounded-lg text-sm font-bold text-gray-700 outline-none">
+                        </div>
+                        <div class="flex-1 time-input hidden">
+                            <p class="text-[10px] text-gray-400 mb-1">時間</p>
+                            <input type="time" id="event-start-time" class="w-full bg-gray-50 p-2 rounded-lg text-sm font-bold text-gray-700 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- 結束時間 -->
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <p class="text-[10px] text-gray-400 mb-1">結束日期</p>
+                            <input type="date" id="event-end-date" class="w-full bg-gray-50 p-2 rounded-lg text-sm font-bold text-gray-700 outline-none">
+                        </div>
+                        <div class="flex-1 time-input hidden">
+                            <p class="text-[10px] text-gray-400 mb-1">時間</p>
+                            <input type="time" id="event-end-time" class="w-full bg-gray-50 p-2 rounded-lg text-sm font-bold text-gray-700 outline-none">
+                        </div>
+                    </div>
                 </div>
-                <button onclick="saveEvent()" class="w-full py-3.5 bg-[#5D93E1] text-white rounded-xl font-bold shadow-lg active:scale-95 transition">新增行程</button>
+
+                <button id="btn-save-event" onclick="saveEvent()" class="w-full py-3.5 bg-[#5D93E1] text-white rounded-xl font-bold shadow-lg active:scale-95 transition">儲存</button>
             </div>
         </div>
 
@@ -315,15 +364,15 @@
         let unsubscribe = null;
         let smokeUnsubscribe = null;
         let calendarUnsubscribe = null; 
-        let roomUnsubscribe = null; // 監聽房間資訊(包含名字)
+        let roomUnsubscribe = null; 
         let editingId = null;
+        let editingEventId = null; 
         let sortableInstance = null;
         let currentTotalStock = 0;
         let transactionsData = {}; 
         let allTransactionsList = []; 
         let allEventsList = []; 
 
-        // 自訂名字
         let boyName = "男生";
         let girlName = "女生";
 
@@ -335,6 +384,33 @@
 
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
+
+        // 🔥 更新至 2030 (春節：小年夜-初三；遇週末補假)
+        const TAIWAN_HOLIDAYS = {
+            '01-01': '元旦', '02-28': '228', '04-04': '兒童節', '04-05': '清明節', 
+            // 2025
+            '2025-01-27': '小年夜', '2025-01-28': '除夕', '2025-01-29': '初一', '2025-01-30': '初二', '2025-01-31': '初三',
+            '2025-05-01': '勞動節', '2025-05-31': '端午節', '2025-09-28': '教師節',
+            '2025-10-06': '中秋節', '2025-10-25': '光復節', '2025-12-25': '行憲',
+            
+            // 2026
+            '2026-02-16': '小年夜', '2026-02-17': '除夕', '2026-02-18': '初一', '2026-02-19': '初二', '2026-02-20': '初三',
+            '2026-04-06': '清明補假', 
+            '2026-05-01': '勞動節', '2026-06-19': '端午節', '2026-09-25': '中秋節',
+            '2026-09-28': '教師節', '2026-10-25': '光復節', '2026-10-26': '光復補假', '2026-12-25': '行憲',
+
+            // 2027 (除夕2/6六、初一2/7日 -> 補假至2/10, 2/11)
+            '2027-02-05': '小年夜', '2027-02-06': '除夕', '2027-02-07': '初一', '2027-02-08': '初二', '2027-02-09': '初三',
+            '2027-02-10': '補假', '2027-02-11': '補假',
+            '2027-05-01': '勞動節', '2027-05-03': '勞動補假',
+            '2027-06-09': '端午節', '2027-09-15': '中秋節', '2027-09-28': '教師節', 
+            '2027-10-25': '光復節', '2027-12-25': '行憲', '2027-12-27': '行憲補假',
+
+            // 2028
+            '2028-01-25': '小年夜', '2028-01-26': '除夕', '2028-01-27': '初一', '2028-01-28': '初二', '2028-01-29': '初三',
+            '2028-05-01': '勞動節', '2028-05-28': '端午節', '2028-05-29': '端午補假', 
+            '2028-09-28': '教師節', '2028-10-03': '中秋節', '2028-10-25': '光復節', '2028-12-25': '行憲'
+        };
 
         const CATEGORIES = {
             expense: [
@@ -370,7 +446,7 @@
             if (myRoomId === ALLOWED_ID && myRole) {
                 document.getElementById('month-picker').value = currentMonthStr;
                 showPage('page-main'); 
-                initRoomListener(); // 監聽名字
+                initRoomListener(); 
                 initListener(); 
                 initSmokeListener(); 
                 initCalendarListener(); 
@@ -398,7 +474,6 @@
         }
         function loginSuccess(id) { localStorage.setItem('myRoomId', id); myRoomId = id; showPage('page-role'); }
 
-        // --- 名字與房間資訊監聽 ---
         function initRoomListener() {
             if(roomUnsubscribe) roomUnsubscribe();
             roomUnsubscribe = db.collection("rooms").doc(myRoomId).onSnapshot((doc) => {
@@ -412,17 +487,14 @@
         }
 
         function updateNameDisplay() {
-            // 更新主畫面的名字
             document.getElementById('name-display-Boy').innerText = boyName;
             document.getElementById('name-display-Girl').innerText = girlName;
             
-            // 更新選角畫面的按鈕文字 (雖然通常看不到，但保持一致)
             const btnBoy = document.getElementById('role-btn-name-Boy');
             const btnGirl = document.getElementById('role-btn-name-Girl');
             if(btnBoy) btnBoy.innerText = "我是 " + boyName;
             if(btnGirl) btnGirl.innerText = "我是 " + girlName;
 
-            // 如果正在行事曆頁面，重繪列表以更新名字
             if(document.getElementById('page-calendar').classList.contains('active')) {
                 renderDayEvents();
             }
@@ -437,7 +509,6 @@
             }
         }
 
-        // --- 記帳主頁面邏輯 ---
         function changeMonth(delta) {
             const parts = currentMonthStr.split('-');
             const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1 + delta, 1);
@@ -564,8 +635,7 @@
                 const amt = Number(d.amount);
                 
                 let timeStr = "";
-                let dateHeader = "";
-
+                
                 if(d.timestamp) {
                     const date = d.timestamp.toDate();
                     const mm = (date.getMonth()+1).toString(); 
@@ -603,7 +673,7 @@
             });
         }
 
-        // --- 行事曆功能 ---
+        // --- 行事曆 ---
 
         function initCalendarListener() {
             if(calendarUnsubscribe) calendarUnsubscribe();
@@ -623,6 +693,14 @@
             renderCalendar();
         }
 
+        function handleCalPickerChange() {
+            const picker = document.getElementById('cal-picker');
+            if(picker.value) {
+                calCurrentDate = new Date(picker.value + "-01");
+                renderCalendar();
+            }
+        }
+
         function renderCalendar() {
             const grid = document.getElementById('cal-grid');
             const title = document.getElementById('cal-title');
@@ -632,6 +710,8 @@
             const month = calCurrentDate.getMonth();
             
             title.innerText = `${year}-${String(month + 1).padStart(2,'0')}`;
+            const picker = document.getElementById('cal-picker');
+            picker.value = `${year}-${String(month + 1).padStart(2,'0')}`;
             
             const firstDay = new Date(year, month, 1).getDay(); 
             const daysInMonth = new Date(year, month + 1, 0).getDate(); 
@@ -641,16 +721,28 @@
             }
 
             for(let d=1; d<=daysInMonth; d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const fullDateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const shortDateStr = `${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 
-                const dayEvents = allEventsList.filter(e => e.date === dateStr);
-                let dotsHtml = '';
+                const holidayName = TAIWAN_HOLIDAYS[fullDateStr] || TAIWAN_HOLIDAYS[shortDateStr];
                 
-                const hasBoy = dayEvents.some(e => e.creator === 'Boy');
-                const hasGirl = dayEvents.some(e => e.creator === 'Girl');
+                const weekDay = new Date(year, month, d).getDay();
+                const isWeekend = (weekDay === 0 || weekDay === 6);
                 
-                if(hasBoy) dotsHtml += `<div class="cal-dot bg-[#5D93E1]"></div>`;
-                if(hasGirl) dotsHtml += `<div class="cal-dot bg-[#E5989B]"></div>`;
+                let numColorClass = (isWeekend || holidayName) ? "text-red-500 font-bold" : "text-gray-700";
+
+                const currentDayTime = new Date(year, month, d).getTime();
+                let hasBoy = false;
+                let hasGirl = false;
+
+                allEventsList.forEach(e => {
+                    const eStart = new Date(e.startDate + 'T00:00:00').getTime();
+                    const eEnd = e.endDate ? new Date(e.endDate + 'T00:00:00').getTime() : eStart;
+                    if (currentDayTime >= eStart && currentDayTime <= eEnd) {
+                        if (e.creator === 'Boy') hasBoy = true;
+                        if (e.creator === 'Girl') hasGirl = true;
+                    }
+                });
 
                 const isSelected = calSelectedDate.getFullYear() === year && 
                                    calSelectedDate.getMonth() === month && 
@@ -659,12 +751,22 @@
                 const today = new Date();
                 const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
 
-                const classes = `cal-cell ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`;
+                // 🔥 背景色塊判定
+                let bgClass = "";
+                if (hasBoy && hasGirl) bgClass = "event-mix";
+                else if (hasBoy) bgClass = "event-boy";
+                else if (hasGirl) bgClass = "event-girl";
+
+                const classes = `cal-cell ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${bgClass}`;
+                
+                let holidayHtml = holidayName ? `<span class="text-[10px] text-red-400 absolute bottom-0.5 scale-90 whitespace-nowrap leading-none">${holidayName}</span>` : '';
+
+                if(isSelected) numColorClass = "text-white font-bold";
 
                 grid.innerHTML += `
                     <div onclick="selectCalDate(${year}, ${month}, ${d})" class="${classes}">
-                        <span>${d}</span>
-                        <div class="flex mt-1">${dotsHtml}</div>
+                        <span class="${numColorClass}">${d}</span>
+                        ${holidayHtml}
                     </div>`;
             }
         }
@@ -682,12 +784,18 @@
             const y = calSelectedDate.getFullYear();
             const m = String(calSelectedDate.getMonth() + 1).padStart(2,'0');
             const d = String(calSelectedDate.getDate()).padStart(2,'0');
-            const dateStr = `${y}-${m}-${d}`;
+            const targetDateStr = `${y}-${m}-${d}`;
+            const targetTime = new Date(targetDateStr + 'T00:00:00').getTime();
             
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
             dateLabel.innerText = `${m}月${d}日 ${weekDays[calSelectedDate.getDay()]}`;
 
-            const events = allEventsList.filter(e => e.date === dateStr);
+            const events = allEventsList.filter(e => {
+                const start = new Date(e.startDate + 'T00:00:00').getTime();
+                const end = e.endDate ? new Date(e.endDate + 'T00:00:00').getTime() : start;
+                return targetTime >= start && targetTime <= end;
+            });
+
             list.innerHTML = '';
 
             if (events.length === 0) {
@@ -697,50 +805,151 @@
 
             events.forEach(e => {
                 const borderColor = e.creator === 'Boy' ? 'border-[#5D93E1]' : 'border-[#E5989B]';
-                // 這裡使用動態名字
                 const creatorName = e.creator === 'Boy' ? boyName : girlName;
+                
+                let timeDisplay = "全天";
+                if (!e.isAllDay && e.startTime) {
+                    timeDisplay = `${e.startTime}`;
+                    if (e.endTime) timeDisplay += ` - ${e.endTime}`;
+                }
+
+                const start = new Date(e.startDate + 'T00:00:00').getTime();
+                const end = e.endDate ? new Date(e.endDate + 'T00:00:00').getTime() : start;
+                const diffTime = Math.abs(end - start);
+                const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                
+                let dayInfo = "";
+                if (totalDays > 1) {
+                    const currentDiff = Math.abs(targetTime - start);
+                    const currentDay = Math.ceil(currentDiff / (1000 * 60 * 60 * 24)) + 1;
+                    dayInfo = `<span class="text-xs text-gray-400 ml-2">(第 ${currentDay}/${totalDays} 天)</span>`;
+                }
+
+                const eventJson = JSON.stringify(e).replace(/"/g, '&quot;');
 
                 list.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl soft-shadow border-l-4 ${borderColor} flex justify-between items-center">
+                    <div class="bg-white p-4 rounded-xl soft-shadow border-l-4 ${borderColor} flex justify-between items-center relative group">
                         <div>
-                            <p class="font-bold text-gray-700 text-lg">${e.title}</p>
-                            <p class="text-xs text-gray-400 mt-1">由 ${creatorName} 建立</p>
+                            <div class="flex items-center">
+                                <p class="font-bold text-gray-700 text-lg">${e.title}</p>
+                                ${dayInfo}
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <p class="text-xs text-[#5D93E1] bg-[#ECF4FF] px-2 py-0.5 rounded font-bold">${timeDisplay}</p>
+                                <p class="text-xs text-gray-400">由 ${creatorName} 建立</p>
+                            </div>
                         </div>
-                        <button onclick="deleteEvent('${e.id}')" class="text-gray-300 hover:text-red-400 px-2"><i class="fa-solid fa-trash"></i></button>
+                        <div class="flex gap-3">
+                            <button onclick="openEditEventModal(${eventJson})" class="text-gray-300 hover:text-[#5D93E1]"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteEvent('${e.id}')" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>
                 `;
             });
         }
 
+        // --- 彈窗相關 ---
         function openEventModal() {
+            editingEventId = null;
             document.getElementById('modal-event').style.display = 'flex';
+            document.getElementById('event-modal-title').innerText = "新增行程";
+            document.getElementById('btn-save-event').innerText = "新增行程";
+            
+            const y = calSelectedDate.getFullYear();
+            const m = String(calSelectedDate.getMonth() + 1).padStart(2,'0');
+            const d = String(calSelectedDate.getDate()).padStart(2,'0');
+            const defaultDate = `${y}-${m}-${d}`;
+
             document.getElementById('event-title').value = '';
-            document.getElementById('event-title').focus();
+            document.getElementById('event-allday').checked = true;
+            document.getElementById('event-start-date').value = defaultDate;
+            document.getElementById('event-end-date').value = defaultDate;
+            document.getElementById('event-start-time').value = "09:00";
+            document.getElementById('event-end-time').value = "10:00";
+            
+            toggleEventTimeInputs();
+        }
+
+        function openEditEventModal(e) {
+            editingEventId = e.id;
+            document.getElementById('modal-event').style.display = 'flex';
+            document.getElementById('event-modal-title').innerText = "編輯行程";
+            document.getElementById('btn-save-event').innerText = "儲存變更";
+
+            document.getElementById('event-title').value = e.title;
+            document.getElementById('event-allday').checked = e.isAllDay;
+            document.getElementById('event-start-date').value = e.startDate;
+            document.getElementById('event-end-date').value = e.endDate || e.startDate;
+            document.getElementById('event-start-time').value = e.startTime || "09:00";
+            document.getElementById('event-end-time').value = e.endTime || "10:00";
+
+            toggleEventTimeInputs();
         }
 
         function closeEventModal() {
             document.getElementById('modal-event').style.display = 'none';
         }
 
+        function toggleEventTimeInputs() {
+            const isAllDay = document.getElementById('event-allday').checked;
+            const timeInputs = document.querySelectorAll('.time-input');
+            timeInputs.forEach(el => {
+                if (isAllDay) el.classList.add('hidden');
+                else el.classList.remove('hidden');
+            });
+        }
+
+        function syncEndDate() {
+            const start = document.getElementById('event-start-date').value;
+            const endInput = document.getElementById('event-end-date');
+            if (start && !editingEventId) { 
+                if (!endInput.value || endInput.value < start) {
+                    endInput.value = start;
+                }
+            }
+        }
+
         function saveEvent() {
             const title = document.getElementById('event-title').value.trim();
+            const isAllDay = document.getElementById('event-allday').checked;
+            const startDate = document.getElementById('event-start-date').value;
+            let endDate = document.getElementById('event-end-date').value;
+            const startTime = document.getElementById('event-start-time').value;
+            const endTime = document.getElementById('event-end-time').value;
+
             if(!title) return alert("請輸入行程名稱");
+            if(!startDate) return alert("請選擇開始日期");
+            if(!endDate) endDate = startDate;
+            
+            if(endDate < startDate) return alert("結束日期不能早於開始日期");
 
-            const y = calSelectedDate.getFullYear();
-            const m = String(calSelectedDate.getMonth() + 1).padStart(2,'0');
-            const d = String(calSelectedDate.getDate()).padStart(2,'0');
-            const dateStr = `${y}-${m}-${d}`;
-
-            const btn = document.querySelector('#modal-event button.bg-\\[\\#5D93E1\\]');
+            const btn = document.getElementById('btn-save-event');
             const oldText = btn.innerText;
-            btn.innerText = "儲存中...";
+            btn.innerText = "處理中...";
 
-            db.collection("rooms").doc(myRoomId).collection("events").add({
-                title: title,
-                date: dateStr,
-                creator: myRole,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(() => {
+            const eventData = {
+                title,
+                isAllDay,
+                startDate,
+                endDate,
+                startTime: isAllDay ? "" : startTime,
+                endTime: isAllDay ? "" : endTime,
+                creator: myRole, 
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            const ref = db.collection("rooms").doc(myRoomId).collection("events");
+            
+            let promise;
+            if (editingEventId) {
+                promise = ref.doc(editingEventId).update(eventData);
+            } else {
+                eventData.date = startDate; 
+                eventData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                promise = ref.add(eventData);
+            }
+
+            promise.then(() => {
                 closeEventModal();
                 btn.innerText = oldText;
             }).catch(err => {
