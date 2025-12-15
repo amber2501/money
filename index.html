@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>記帳本 (拖曳排序版)</title>
+    <title>記帳本 (類別升級版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     
-    <!-- SortableJS (用於拖曳排序) -->
+    <!-- SortableJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
     <style>
@@ -24,10 +24,12 @@
         .page.active { display: flex; }
         .modal-enter { animation: slideUp 0.3s ease-out forwards; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        
-        /* 拖曳時的樣式 */
         .sortable-ghost { opacity: 0.4; background-color: #E9F5DB; }
-        .sortable-drag { cursor: grabbing; }
+        
+        /* 類別選擇樣式 */
+        .cat-item { transition: all 0.2s; border: 2px solid transparent; }
+        .cat-item.active { border-color: #84A98C; background-color: #E9F5DB; color: #52796F; transform: scale(1.05); }
+        .cat-item.active-income { border-color: #8ECAE6; background-color: #E0F4FF; color: #219EBC; transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -62,7 +64,7 @@
             </button>
         </div>
 
-        <!-- 3. 主畫面 (記帳) -->
+        <!-- 3. 主畫面 -->
         <div id="page-main" class="page relative">
             <header class="pt-10 pb-6 px-6 bg-white rounded-b-[35px] soft-shadow z-10 relative">
                 <div class="flex justify-between items-center mb-4">
@@ -100,7 +102,7 @@
             <div id="readonly-tip" class="absolute bottom-20 w-full text-center hidden"><span class="bg-gray-800 text-white text-[10px] px-3 py-1 rounded-full opacity-70">只能看，不能幫對方記帳喔</span></div>
         </div>
 
-        <!-- 4. 香菸頁面 (可拖曳 & 詳細歷史) -->
+        <!-- 4. 香菸頁面 -->
         <div id="page-smoke" class="page bg-[#F9F9F7] relative">
             <header class="pt-10 pb-4 px-6 bg-white rounded-b-[30px] soft-shadow mb-4 z-10">
                 <button onclick="showPage('page-main')" class="text-gray-400 mb-4 flex items-center gap-2 text-sm"><i class="fa-solid fa-arrow-left"></i> 返回記帳</button>
@@ -117,7 +119,6 @@
                         </button>
                     </div>
                 </div>
-                
                 <div id="add-smoke-box" class="hidden mt-4 bg-gray-50 p-3 rounded-xl animate-fade">
                     <div class="flex gap-2">
                         <input type="text" id="new-smoke-name" class="flex-1 bg-white p-2 rounded-lg text-sm outline-none border border-gray-200" placeholder="輸入香菸品牌">
@@ -132,23 +133,43 @@
             </main>
         </div>
 
-        <!-- 5. 記帳彈窗 -->
+        <!-- 5. 記帳彈窗 (UI 升級版) -->
         <div id="modal-add" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-end sm:items-center sm:justify-center">
-            <div class="bg-white w-full sm:w-[450px] sm:rounded-2xl rounded-t-3xl p-6 modal-enter relative">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-gray-600 text-lg"><span id="modal-title">記一筆</span> <span id="modal-who" class="text-xs ml-2 bg-gray-100 px-2 py-1 rounded text-gray-400"></span></h3>
-                    <div class="flex gap-4">
-                        <button onclick="deleteTransaction()" id="btn-delete" class="text-red-400 hidden hover:bg-red-50 px-2 rounded"><i class="fa-solid fa-trash-can"></i></button>
+            <div class="bg-white w-full sm:w-[450px] sm:rounded-2xl rounded-t-3xl p-6 modal-enter relative max-h-[85vh] flex flex-col">
+                
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-4">
+                    <!-- 分頁切換 (Tab) -->
+                    <div class="flex bg-gray-100 rounded-lg p-1">
+                        <button onclick="setType('expense')" id="tab-expense" class="px-6 py-1.5 rounded-md text-sm font-bold transition shadow-sm bg-white text-gray-700">支出</button>
+                        <button onclick="setType('income')" id="tab-income" class="px-6 py-1.5 rounded-md text-sm font-bold transition text-gray-400">收入</button>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="deleteTransaction()" id="btn-delete" class="text-red-300 hidden hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                         <button onclick="closeModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
                     </div>
                 </div>
-                <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-xl text-3xl font-bold text-gray-700 outline-none mb-4" placeholder="金額">
-                <input type="text" id="input-title" class="w-full bg-gray-50 p-4 rounded-xl text-lg text-gray-700 outline-none mb-4" placeholder="備註">
-                <div class="flex gap-4 mb-4">
-                    <button onclick="setType('expense')" id="btn-exp" class="flex-1 py-3 rounded-xl border bg-red-50 text-red-400 font-bold border-red-200">支出</button>
-                    <button onclick="setType('income')" id="btn-inc" class="flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200">收入</button>
+
+                <!-- 金額輸入 (大字體) -->
+                <div class="mb-4">
+                    <p class="text-xs text-gray-400 mb-1 ml-1">金額</p>
+                    <input type="number" id="input-amount" class="w-full bg-gray-50 p-4 rounded-2xl text-4xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-[#84A98C]/20 transition" placeholder="0">
                 </div>
-                <button onclick="saveTransaction()" id="btn-submit" class="w-full py-4 bg-gray-800 text-white rounded-xl font-bold shadow-md active:scale-95 transition">儲存</button>
+
+                <!-- 類別選擇 (Grid) -->
+                <div class="flex-1 overflow-y-auto mb-4 no-scrollbar">
+                    <p class="text-xs text-gray-400 mb-2 ml-1">選擇類別</p>
+                    <div id="category-grid" class="grid grid-cols-4 gap-3 mb-2">
+                        <!-- JS 動態生成類別 -->
+                    </div>
+                </div>
+
+                <!-- 備註輸入 -->
+                <div class="mb-4">
+                    <input type="text" id="input-title" class="w-full bg-transparent border-b border-gray-200 p-2 text-gray-600 outline-none focus:border-[#84A98C] transition" placeholder="備註 (選填)">
+                </div>
+
+                <button onclick="saveTransaction()" id="btn-submit" class="w-full py-4 bg-[#84A98C] text-white rounded-xl font-bold shadow-lg active:scale-95 transition">儲存</button>
             </div>
         </div>
 
@@ -156,7 +177,7 @@
         <div id="modal-history" class="fixed inset-0 bg-black bg-opacity-30 z-50 hidden items-center justify-center">
             <div class="bg-white w-full max-w-sm rounded-2xl p-6 modal-enter m-4 relative max-h-[80vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-gray-600">每日詳細統計</h3>
+                    <h3 class="font-bold text-gray-600">每日詳細統計 <span class="text-xs text-gray-400">(6點結算)</span></h3>
                     <button onclick="closeHistory()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
                 </div>
                 <div id="hist-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
@@ -185,14 +206,43 @@
         let myRoomId = localStorage.getItem('myRoomId');
         let myRole = localStorage.getItem('myRole');
         let currentView = myRole || 'Boy';
-        let currentType = 'expense';
+        let currentType = 'expense'; // 'expense' or 'income'
+        let currentCategory = 'others'; // 預設類別
         let unsubscribe = null;
         let smokeUnsubscribe = null;
         let editingId = null;
-        let sortableInstance = null; // 拖曳實例
+        let sortableInstance = null;
 
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
+
+        // 類別定義
+        const CATEGORIES = {
+            expense: [
+                {id: 'breakfast', name: '早餐', icon: 'fa-bread-slice'},
+                {id: 'lunch', name: '午餐', icon: 'fa-bowl-rice'},
+                {id: 'dinner', name: '晚餐', icon: 'fa-utensils'},
+                {id: 'drinks', name: '飲料', icon: 'fa-mug-hot'},
+                {id: 'snacks', name: '點心', icon: 'fa-cookie-bite'},
+                {id: 'entertainment', name: '娛樂', icon: 'fa-gamepad'},
+                {id: 'rent', name: '房租', icon: 'fa-house'},
+                {id: 'shopping', name: '購物', icon: 'fa-bag-shopping'},
+                {id: 'transport', name: '交通', icon: 'fa-bus'},
+                {id: 'others', name: '其他', icon: 'fa-pen'},
+            ],
+            income: [
+                {id: 'salary', name: '薪水', icon: 'fa-sack-dollar'},
+                {id: 'bonus', name: '獎金', icon: 'fa-star'},
+                {id: 'investment', name: '投資', icon: 'fa-chart-line'},
+                {id: 'others', name: '其他', icon: 'fa-pen'},
+            ]
+        };
+
+        function getLogicalDateStr() {
+            const now = new Date();
+            const adjustedDate = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+            return adjustedDate.toISOString().split('T')[0];
+        }
 
         // 2. 啟動 App
         function initApp() {
@@ -232,7 +282,7 @@
             localStorage.setItem('myRoomId', id); myRoomId = id; showPage('page-role');
         }
 
-        // 4. 記帳列表
+        // 4. 記帳列表 (更新：顯示類別圖示)
         function initListener() {
             updateUI();
             if(unsubscribe) unsubscribe();
@@ -243,6 +293,7 @@
                     list.innerHTML = '';
                     let total = 0;
                     if(snapshot.empty) list.innerHTML = '<div class="text-center text-gray-300 text-xs mt-10">還沒有記帳，點擊 + 新增</div>';
+                    
                     let docs = [];
                     snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
                     docs.sort((a, b) => {
@@ -250,10 +301,12 @@
                         let t2 = b.timestamp ? b.timestamp.seconds : 0;
                         return t2 - t1;
                     });
+
                     docs.forEach(d => {
                         const isExp = d.type === 'expense';
                         const amt = Number(d.amount);
                         if(isExp) total -= amt; else total += amt;
+                        
                         let timeStr = "";
                         if(d.timestamp) {
                             const date = d.timestamp.toDate();
@@ -264,12 +317,25 @@
                             timeStr = `${mm}/${dd} ${hh}:${min}`;
                         }
                         const color = isExp ? 'text-[#E5989B]' : 'text-[#84A98C]';
+                        
+                        // 找圖示
+                        const catList = CATEGORIES[d.type] || CATEGORIES.expense;
+                        const catObj = catList.find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
+                        
+                        // 備註顯示邏輯：如果有備註顯示備註，沒有則顯示類別名
+                        const displayTitle = d.title ? d.title : catObj.name;
+
                         list.innerHTML += `
-                        <div onclick="openModal('${d.id}', '${d.title}', '${d.amount}', '${d.type}')" 
+                        <div onclick="openModal('${d.id}', '${d.title || ''}', '${d.amount}', '${d.type}', '${d.category}')" 
                              class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
-                            <div>
-                                <p class="font-bold text-gray-700">${d.title}</p>
-                                <p class="text-xs text-gray-400 mt-1"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr} <span class="ml-2 px-1 rounded bg-gray-100">${isExp?'支出':'收入'}</span></p>
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full ${isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#E0F4FF] text-[#84A98C]'} flex items-center justify-center text-lg">
+                                    <i class="fa-solid ${catObj.icon}"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-700">${displayTitle}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p>
+                                </div>
                             </div>
                             <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
                         </div>`;
@@ -279,68 +345,49 @@
                 });
         }
 
-        // 5. 🔥 香菸邏輯 (小卡片 + 拖曳 + 詳細歷史)
+        // 5. 香菸邏輯
         function initSmokeListener() {
             if(smokeUnsubscribe) smokeUnsubscribe();
             
             const addArea = document.getElementById('smoke-add-area');
             const dragHint = document.getElementById('drag-hint');
             if (myRole === 'Boy') {
-                addArea.classList.remove('hidden');
-                dragHint.classList.remove('hidden');
+                addArea.classList.remove('hidden'); dragHint.classList.remove('hidden');
             } else {
-                addArea.classList.add('hidden');
-                dragHint.classList.add('hidden');
+                addArea.classList.add('hidden'); dragHint.classList.add('hidden');
             }
 
             smokeUnsubscribe = db.collection("rooms").doc(myRoomId).collection("smokes")
-                .orderBy("order", "asc") // 依照自訂順序排列
+                .orderBy("order", "asc")
                 .onSnapshot((snapshot) => {
                     const list = document.getElementById('smoke-list');
                     list.innerHTML = '';
-                    
-                    if(snapshot.empty) {
-                        list.innerHTML = `<div class="text-center text-gray-300 text-sm mt-10">暫無品牌</div>`;
-                        return;
-                    }
+                    if(snapshot.empty) { list.innerHTML = `<div class="text-center text-gray-300 text-sm mt-10">暫無品牌</div>`; return; }
 
                     snapshot.forEach(doc => {
                         const d = doc.data();
-                        const todayStr = getTodayStr();
+                        const todayStr = getLogicalDateStr();
                         let displayToday = d.todayCount || 0;
                         if(d.lastUpdated !== todayStr) displayToday = 0;
 
-                        // 小卡片 UI
-                        let controls = '';
-                        let stockEdit = '';
-                        let dragHandle = '';
+                        let controls = '', stockEdit = '', dragHandle = '', menuBtn = '';
 
                         if(myRole === 'Boy') {
                             dragHandle = `<div class="drag-handle text-gray-300 mr-3 cursor-move px-2"><i class="fa-solid fa-bars"></i></div>`;
-                            
                             stockEdit = `<button onclick="editStock('${doc.id}', ${d.stock})" class="text-gray-300 hover:text-[#84A98C] ml-1"><i class="fa-solid fa-pen text-[10px]"></i></button>`;
-                            
                             controls = `
                                 <div class="flex items-center gap-3">
                                     <button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', -1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200">-</button>
                                     <span class="text-xl font-bold text-[#84A98C] w-6 text-center">${displayToday}</span>
                                     <button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', 1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-[#84A98C] text-white font-bold shadow-md active:scale-95">+</button>
-                                </div>
-                            `;
-                        } else {
-                            // 女生只看數據
-                            controls = `<span class="text-xl font-bold text-[#84A98C] px-2">今日: ${displayToday}</span>`;
-                        }
-
-                        // 開新包與刪除選單 (簡化為右上角小按鈕)
-                        let menuBtn = '';
-                        if(myRole === 'Boy') {
-                             menuBtn = `
+                                </div>`;
+                            menuBtn = `
                                 <div class="flex flex-col gap-2 ml-4 border-l border-gray-100 pl-4 items-center justify-center">
                                     <button onclick="openNewPack('${doc.id}', '${d.brandName}')" class="text-xs bg-[#E9F5DB] text-[#84A98C] px-2 py-1 rounded font-bold whitespace-nowrap active:scale-95">開新包</button>
                                     <button onclick="deleteSmokeBrand('${doc.id}')" class="text-gray-300 text-xs hover:text-red-400 mt-1"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                             `;
+                                </div>`;
+                        } else {
+                            controls = `<span class="text-xl font-bold text-[#84A98C] px-2">今日: ${displayToday}</span>`;
                         }
 
                         list.innerHTML += `
@@ -354,25 +401,15 @@
                             </div>
                             ${controls}
                             ${menuBtn}
-                        </div>
-                        `;
+                        </div>`;
                     });
 
-                    // 初始化拖曳功能 (只在男生版啟用)
                     if(myRole === 'Boy' && !sortableInstance) {
-                        sortableInstance = new Sortable(list, {
-                            handle: '.drag-handle',
-                            animation: 150,
-                            ghostClass: 'sortable-ghost',
-                            onEnd: function (evt) {
-                                updateOrder(); // 拖曳結束後更新資料庫
-                            },
-                        });
+                        sortableInstance = new Sortable(list, { handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost', onEnd: function (evt) { updateOrder(); }, });
                     }
                 });
         }
 
-        // 拖曳結束後，更新所有項目的 Order
         function updateOrder() {
             const items = document.querySelectorAll('#smoke-list > div');
             const batch = db.batch();
@@ -383,178 +420,195 @@
             });
             batch.commit();
         }
-
         function toggleAddSmoke() { document.getElementById('add-smoke-box').classList.toggle('hidden'); }
         function addSmokeBrand() {
             const name = document.getElementById('new-smoke-name').value;
             if(!name) return;
-            // 預設 order 設為 999，之後拖曳會重排
-            db.collection("rooms").doc(myRoomId).collection("smokes").add({
-                brandName: name, stock: 20, todayCount: 0, lastUpdated: getTodayStr(), order: 999
-            }).then(() => {
-                document.getElementById('new-smoke-name').value = ''; toggleAddSmoke();
-            });
+            db.collection("rooms").doc(myRoomId).collection("smokes").add({ brandName: name, stock: 20, todayCount: 0, lastUpdated: getLogicalDateStr(), order: 999 }).then(() => { document.getElementById('new-smoke-name').value = ''; toggleAddSmoke(); });
         }
         function deleteSmokeBrand(id) { if(confirm("刪除此品牌？")) db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).delete(); }
         function editStock(id, current) {
             const newVal = prompt("修改庫存數量：", current);
             if(newVal !== null && !isNaN(newVal)) db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: Number(newVal) });
         }
-
-        // 🔥 功能：增減數量 (取代原本的抽一根)
         function changeSmokeCount(id, brandName, delta, currentToday, currentStock, lastDate) {
-            const todayStr = getTodayStr();
+            const todayStr = getLogicalDateStr();
             let newToday = currentToday;
-            
-            // 如果跨日了，今日歸零
             if (lastDate !== todayStr) newToday = 0;
-
-            // 計算新數值
             newToday += delta;
             let newStock = currentStock - delta;
-
-            if(newToday < 0) return; // 不能負數
-            if(delta > 0 && currentStock <= 0) { alert("沒菸了！"); return; } // 沒庫存不能抽
-
-            // 更新 DB
-            const smokeRef = db.collection("rooms").doc(myRoomId).collection("smokes").doc(id);
-            smokeRef.update({ stock: newStock, todayCount: newToday, lastUpdated: todayStr });
-
-            // 寫入詳細歷史
+            if(newToday < 0) return;
+            if(delta > 0 && currentStock <= 0) { alert("沒菸了！"); return; }
+            db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: newStock, todayCount: newToday, lastUpdated: todayStr });
             logHistory(brandName, delta);
         }
-
-        // 🔥 功能：開新包
         function openNewPack(id, brandName) {
-            db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({
-                stock: firebase.firestore.FieldValue.increment(20)
-            });
-            // 歷史紀錄也要記一筆 (開新包不影響今日抽菸數，但在詳細紀錄會看到)
+            db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: firebase.firestore.FieldValue.increment(20) });
             logPackOpen(brandName);
         }
-
-        // 寫入詳細歷史紀錄 (依品牌統計)
         function logHistory(brandName, delta) {
-            const todayStr = getTodayStr();
+            const todayStr = getLogicalDateStr();
             const logRef = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(todayStr);
-            
-            // 使用 merge 來更新特定品牌的計數
-            const updateData = {
-                total: firebase.firestore.FieldValue.increment(delta)
-            };
-            // 動態更新該品牌的數量 details.七星 = increment(1)
+            const updateData = { total: firebase.firestore.FieldValue.increment(delta), date: todayStr };
             updateData[`details.${brandName}`] = firebase.firestore.FieldValue.increment(delta);
-
             logRef.set(updateData, { merge: true });
         }
-
         function logPackOpen(brandName) {
-            const todayStr = getTodayStr();
+            const todayStr = getLogicalDateStr();
             const logRef = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(todayStr);
-            // 紀錄開包事件
-            logRef.set({
-                packsOpened: firebase.firestore.FieldValue.arrayUnion(brandName)
-            }, { merge: true });
+            logRef.set({ packsOpened: firebase.firestore.FieldValue.arrayUnion(brandName), date: todayStr }, { merge: true });
         }
-
-        // 🔥 功能：顯示詳細總歷史
         function showGlobalHistory() {
             const modal = document.getElementById('modal-history');
             const list = document.getElementById('hist-list');
             modal.style.display = 'flex';
             list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">載入中...</div>';
-
-            db.collection("rooms").doc(myRoomId).collection("smoke_history_v2")
-                .orderBy(firebase.firestore.FieldPath.documentId(), "desc").limit(14)
-                .get().then(snapshot => {
+            db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").limit(14).get()
+                .then(snapshot => {
                     list.innerHTML = '';
-                    if(snapshot.empty) {
-                        list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">暫無歷史紀錄</div>';
-                        return;
-                    }
-                    snapshot.forEach(doc => {
-                        const d = doc.data();
-                        const date = doc.id;
+                    if(snapshot.empty) { list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">暫無歷史紀錄</div>'; return; }
+                    let docs = [];
+                    snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+                    docs.sort((a, b) => b.id.localeCompare(a.id));
+                    docs.forEach(d => {
+                        const date = d.id;
                         const total = d.total || 0;
                         const details = d.details || {};
                         const packs = d.packsOpened || [];
-
-                        // 組合詳情字串
-                        let detailStr = Object.entries(details)
-                            .map(([k, v]) => `${k}: ${v}`)
-                            .join('、');
-                        
-                        // 組合開包字串
-                        let packStr = '';
-                        if(packs.length > 0) {
-                            packStr = `<div class="text-[10px] text-[#84A98C] mt-1"><i class="fa-solid fa-box-open"></i> 開了: ${packs.join(', ')}</div>`;
-                        }
-
+                        let detailStr = Object.entries(details).map(([k, v]) => `${k}: ${v}`).join('、');
+                        let packStr = packs.length > 0 ? `<div class="text-[10px] text-[#84A98C] mt-1"><i class="fa-solid fa-box-open"></i> 開了: ${packs.join(', ')}</div>` : '';
                         if(!detailStr) detailStr = "無詳細資料";
-
                         list.innerHTML += `
                             <div class="border-b border-gray-100 py-3">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-700 font-bold">${date}</span>
-                                    <span class="text-[#84A98C] font-bold text-lg">${total} 根</span>
-                                </div>
-                                <div class="text-xs text-gray-400 mt-1">${detailStr}</div>
-                                ${packStr}
-                            </div>
-                        `;
+                                <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">${date}</span><span class="text-[#84A98C] font-bold text-lg">${total} 根</span></div>
+                                <div class="text-xs text-gray-400 mt-1">${detailStr}</div>${packStr}
+                            </div>`;
                     });
-                });
+                }).catch(err => { list.innerHTML = `<div class="text-center text-xs text-red-300 mt-4">載入失敗: ${err.message}</div>`; });
         }
         function closeHistory() { document.getElementById('modal-history').style.display = 'none'; }
 
-
-        // 記帳、存檔、其他
+        // 6. 記帳存檔 (更新：儲存類別)
         function saveTransaction() {
             const amt = document.getElementById('input-amount').value;
             const title = document.getElementById('input-title').value;
-            if(!amt || !title) return;
+            if(!amt) return alert("請輸入金額");
+            
+            // 如果選了「其他」，必須填寫備註
+            if (currentCategory === 'others' && !title) return alert("請輸入項目名稱");
+
             const collectionRef = db.collection("rooms").doc(myRoomId).collection("transactions");
             const btn = document.getElementById('btn-submit');
             btn.innerText = "處理中...";
 
+            const data = {
+                who: myRole,
+                amount: Number(amt),
+                title: title, // 備註 (選填，除非是其他)
+                type: currentType,
+                category: currentCategory
+            };
+
             if (editingId) {
-                collectionRef.doc(editingId).update({ amount: Number(amt), title: title, type: currentType }).then(() => closeModal());
+                collectionRef.doc(editingId).update(data).then(() => closeModal());
             } else {
-                collectionRef.add({
-                    who: myRole, amount: Number(amt), title: title, type: currentType, timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).then(() => {
-                    closeModal(); document.getElementById('input-amount').value = ''; document.getElementById('input-title').value = '';
+                data.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+                collectionRef.add(data).then(() => {
+                    closeModal();
+                    document.getElementById('input-amount').value = '';
+                    document.getElementById('input-title').value = '';
                 });
             }
         }
         function deleteTransaction() { if(editingId && confirm("刪除此紀錄？")) db.collection("rooms").doc(myRoomId).collection("transactions").doc(editingId).delete().then(() => closeModal()); }
 
-        // Utils
-        function getTodayStr() { const d = new Date(); return d.toISOString().split('T')[0]; }
-        function selectRole(role) { 
-            localStorage.setItem('myRole', role); myRole = role; currentView = role; 
-            showPage('page-main'); initListener(); initSmokeListener();
-        }
+        // UI Helpers
+        function selectRole(role) { localStorage.setItem('myRole', role); myRole = role; currentView = role; showPage('page-main'); initListener(); initSmokeListener(); }
         function switchView(role) { currentView = role; initListener(); }
         function showPage(id) { document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function openModal(id, title, amt, type) {
+        
+        function openModal(id, title, amt, type, category) {
             document.getElementById('modal-add').style.display='flex'; document.getElementById('modal-who').innerText = myRole;
             const btnDel = document.getElementById('btn-delete'); const btnSub = document.getElementById('btn-submit');
-            if(id) {
-                editingId=id; document.getElementById('input-title').value=title; document.getElementById('input-amount').value=amt; setType(type);
+            
+            // 預設狀態
+            if(!id) {
+                editingId=null; document.getElementById('modal-title').innerText="記一筆";
+                btnDel.style.display='none'; btnSub.innerText="儲存"; btnSub.style.display='block';
+                setType('expense'); 
+                selectCategory('breakfast'); // 預設選第一個
+            } else {
+                // 編輯模式
+                editingId=id; document.getElementById('input-title').value=title; document.getElementById('input-amount').value=amt; 
+                setType(type);
+                selectCategory(category || 'others'); // 如果舊資料沒類別，預設其他
+                
                 document.getElementById('modal-title').innerText="編輯";
                 if(currentView===myRole){ btnSub.style.display='block'; btnDel.style.display='block'; btnSub.innerText="更新"; } else { btnSub.style.display='none'; btnDel.style.display='none'; }
-            } else {
-                editingId=null; document.getElementById('modal-title').innerText="記一筆";
-                btnDel.style.display='none'; btnSub.innerText="儲存"; btnSub.style.display='block'; setType('expense');
             }
         }
         function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
+        
+        // 渲染類別
         function setType(t) { 
-            currentType = t; 
-            document.getElementById('btn-exp').className = t==='expense' ? "flex-1 py-3 rounded-xl border bg-red-50 text-red-400 font-bold border-red-200" : "flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200"; 
-            document.getElementById('btn-inc').className = t==='income' ? "flex-1 py-3 rounded-xl border bg-blue-50 text-blue-400 font-bold border-blue-200" : "flex-1 py-3 rounded-xl border text-gray-400 font-bold border-gray-200"; 
+            currentType = t;
+            const tabExp = document.getElementById('tab-expense');
+            const tabInc = document.getElementById('tab-income');
+            
+            if(t === 'expense') {
+                tabExp.className = "px-6 py-1.5 rounded-md text-sm font-bold transition shadow-sm bg-white text-gray-700";
+                tabInc.className = "px-6 py-1.5 rounded-md text-sm font-bold transition text-gray-400";
+                renderCategories(CATEGORIES.expense);
+            } else {
+                tabExp.className = "px-6 py-1.5 rounded-md text-sm font-bold transition text-gray-400";
+                tabInc.className = "px-6 py-1.5 rounded-md text-sm font-bold transition shadow-sm bg-white text-gray-700";
+                renderCategories(CATEGORIES.income);
+            }
         }
+
+        function renderCategories(list) {
+            const grid = document.getElementById('category-grid');
+            grid.innerHTML = '';
+            list.forEach(cat => {
+                grid.innerHTML += `
+                    <div onclick="selectCategory('${cat.id}')" id="cat-${cat.id}" class="cat-item flex flex-col items-center justify-center p-2 rounded-xl cursor-pointer bg-white border border-gray-100 h-20">
+                        <i class="fa-solid ${cat.icon} text-xl mb-1 text-gray-400"></i>
+                        <span class="text-xs text-gray-500 font-medium">${cat.name}</span>
+                    </div>
+                `;
+            });
+            // 預設選第一個
+            selectCategory(list[0].id);
+        }
+
+        function selectCategory(id) {
+            currentCategory = id;
+            // 移除所有 active
+            document.querySelectorAll('.cat-item').forEach(el => {
+                el.classList.remove('active', 'active-income');
+                el.querySelector('i').classList.remove('text-[#52796F]', 'text-[#219EBC]');
+                el.querySelector('i').classList.add('text-gray-400');
+            });
+            
+            const activeClass = currentType === 'expense' ? 'active' : 'active-income';
+            const iconColor = currentType === 'expense' ? 'text-[#52796F]' : 'text-[#219EBC]';
+            
+            const target = document.getElementById(`cat-${id}`);
+            if(target) {
+                target.classList.add(activeClass);
+                target.querySelector('i').classList.remove('text-gray-400');
+                target.querySelector('i').classList.add(iconColor);
+            }
+
+            // 如果選其他，提示輸入名稱
+            const inputTitle = document.getElementById('input-title');
+            if(id === 'others') {
+                inputTitle.placeholder = "請輸入項目名稱 (必填)";
+            } else {
+                inputTitle.placeholder = "備註 (選填)";
+            }
+        }
+
         function logout() { if(confirm("確定要登出嗎？")) { localStorage.clear(); location.reload(); } }
         function updateUI() {
              const fab = document.getElementById('fab-add');
