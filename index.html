@@ -402,56 +402,30 @@
         const ALLOWED_ID = "h39862469";
         const ALLOWED_PIN = "1115";
 
-        // 🔥 2028修正：4/3兒童節(一)、4/4清明節(二)，4/5無放假
         const TAIWAN_HOLIDAYS = {
             '01-01': '元旦', '02-28': '228', '04-04': '兒童節', '04-05': '清明節', 
-            // 2025
             '2025-01-27': '小年夜', '2025-01-28': '除夕', '2025-01-29': '初一', '2025-01-30': '初二', '2025-01-31': '初三',
             '2025-05-01': '勞動節', '2025-05-31': '端午節', '2025-09-28': '教師節', '2025-09-29': '教師補假',
             '2025-10-06': '中秋節', '2025-10-25': '光復節', '2025-10-24': '光復補假',
-            
-            // 2026
             '2026-02-15': '小年夜', '2026-02-16': '除夕', '2026-02-17': '初一', '2026-02-18': '初二', '2026-02-19': '初三',
-            '2026-02-20': '彈性補假',
-            '2026-02-27': '228補假',
-            '2026-04-03': '兒童補假',
-            '2026-04-06': '清明補假', 
+            '2026-02-20': '彈性補假', '2026-02-27': '228補假', '2026-04-03': '兒童補假', '2026-04-06': '清明補假', 
             '2026-05-01': '勞動節', '2026-06-19': '端午節', '2026-09-25': '中秋節',
             '2026-09-28': '教師節', '2026-10-25': '光復節', '2026-10-26': '光復補假', '2026-12-25': '行憲',
-
-            // 2027
             '2027-02-04': '小年夜', '2027-02-05': '除夕', '2027-02-06': '春節', '2027-02-07': '春節', '2027-02-08': '春節',
-            '2027-02-09': '春節補假', '2027-02-10': '春節補假', 
-            '2027-03-01': '228補假',
-            '2027-04-06': '兒童補假',
-            '2027-04-30': '勞動補假',
-            '2027-06-09': '端午節', '2027-09-15': '中秋節', '2027-09-28': '教師節', 
-            '2027-10-11': '國慶補假', '2027-10-25': '光復節',
-            '2027-12-24': '行憲補假',
-            '2027-12-31': '元旦補假',
-
-            // 2028 (修正)
+            '2027-02-09': '春節補假', '2027-02-10': '春節補假', '2027-03-01': '228補假', '2027-04-06': '兒童補假',
+            '2027-04-30': '勞動補假', '2027-06-09': '端午節', '2027-09-15': '中秋節', '2027-09-28': '教師節', 
+            '2027-10-11': '國慶補假', '2027-10-25': '光復節', '2027-12-24': '行憲補假', '2027-12-31': '元旦補假',
             '2028-01-24': '小年夜', '2028-01-25': '除夕', '2028-01-26': '初一', '2028-01-27': '初二', '2028-01-28': '初三',
-            '2028-02-28': '228',
-            '2028-04-03': '兒童節', '2028-04-04': '清明節', 
+            '2028-02-28': '228', '2028-04-03': '兒童節', '2028-04-04': '清明節', 
             '2028-05-01': '勞動節', '2028-05-29': '端午補假', 
             '2028-09-28': '教師節', '2028-10-03': '中秋節', '2028-10-25': '光復節', '2028-12-25': '行憲',
-
-            // 2029
             '2029-02-11': '小年夜', '2029-02-12': '除夕', '2029-02-13': '初一', '2029-02-14': '初二', '2029-02-15': '初三',
-            '2029-02-16': '小年夜補假', 
-            '2029-04-04': '兒童/清明', '2029-04-05': '補假',
-            '2029-05-01': '勞動節',
-            '2029-06-16': '端午節', '2029-06-15': '端午補假',
-            '2029-09-22': '中秋節', '2029-09-21': '中秋補假',
+            '2029-02-16': '小年夜補假', '2029-04-04': '兒童/清明', '2029-04-05': '補假', '2029-05-01': '勞動節',
+            '2029-06-16': '端午節', '2029-06-15': '端午補假', '2029-09-22': '中秋節', '2029-09-21': '中秋補假',
             '2029-09-28': '教師節', '2029-10-10': '國慶日', '2029-10-25': '光復節', '2029-12-25': '行憲',
-
-            // 2030
             '2030-02-01': '小年夜', '2030-02-02': '除夕', '2030-02-03': '初一', '2030-02-04': '初二', '2030-02-05': '初三',
-            '2030-02-06': '春節補假', '2030-02-07': '春節補假',
-            '2030-05-01': '勞動節', '2030-06-05': '端午節', '2030-09-12': '中秋節',
-            '2030-09-28': '教師節', '2030-09-27': '教師補假',
-            '2030-10-25': '光復節', '2030-12-25': '行憲'
+            '2030-02-06': '春節補假', '2030-02-07': '春節補假', '2030-05-01': '勞動節', '2030-06-05': '端午節', 
+            '2030-09-12': '中秋節', '2030-09-28': '教師節', '2030-09-27': '教師補假', '2030-10-25': '光復節', '2030-12-25': '行憲'
         };
 
         const CATEGORIES = {
@@ -475,9 +449,10 @@
             ]
         };
 
+        // 🔥 關鍵函式：取得邏輯日期 (早上6點前都算前一天)
         function getLogicalDateStr() {
             const now = new Date();
-            now.setHours(now.getHours() - 6);
+            now.setHours(now.getHours() - 6); // 減去6小時，確保6點為分界線
             const y = now.getFullYear();
             const m = String(now.getMonth() + 1).padStart(2, '0');
             const d = String(now.getDate()).padStart(2, '0');
@@ -1016,14 +991,21 @@
         }
 
 
-        // --- 香菸與歷史紀錄 ---
+        // --- 香菸與歷史紀錄 (已修正邏輯) ---
 
+        // 🔥 修正：初始化香菸監聽，加入跨日歸零判斷
         function initSmokeListener() {
             if(smokeUnsubscribe) smokeUnsubscribe();
+            
             const addArea = document.getElementById('smoke-add-area');
             const dragHint = document.getElementById('drag-hint');
-            if (myRole === 'Boy') { addArea.classList.remove('hidden'); dragHint.classList.remove('hidden'); }
-            else { addArea.classList.add('hidden'); dragHint.classList.add('hidden'); }
+            if (myRole === 'Boy') { 
+                addArea.classList.remove('hidden'); 
+                dragHint.classList.remove('hidden'); 
+            } else { 
+                addArea.classList.add('hidden'); 
+                dragHint.classList.add('hidden'); 
+            }
 
             smokeUnsubscribe = db.collection("rooms").doc(myRoomId).collection("smokes")
                 .orderBy("order", "asc")
@@ -1038,11 +1020,16 @@
                         const d = doc.data();
                         currentTotalStock += (d.stock || 0);
                         
+                        // 🔥 修正邏輯：比較資料庫日期與邏輯日期 (6點分界)
+                        // 如果資料庫的 lastUpdated 不是今天，強制將顯示的 todayCount 設為 0
                         const todayStr = getLogicalDateStr();
                         let displayToday = d.todayCount || 0;
-                        if(d.lastUpdated !== todayStr) displayToday = 0;
+                        if(d.lastUpdated !== todayStr) {
+                            displayToday = 0; 
+                        }
 
                         let controls = '', stockEdit = '', dragHandle = '', menuBtn = '';
+                        
                         if(myRole === 'Boy') {
                             dragHandle = `<div class="drag-handle text-gray-300 mr-3 cursor-move px-2"><i class="fa-solid fa-bars"></i></div>`;
                             stockEdit = `<button onclick="editStock('${doc.id}', ${d.stock})" class="text-gray-300 hover:text-[#5D93E1] ml-1"><i class="fa-solid fa-pen text-[10px]"></i></button>`;
@@ -1058,8 +1045,10 @@
                                     <button onclick="deleteSmokeBrand('${doc.id}')" class="text-gray-300 text-xs hover:text-red-400 mt-1"><i class="fa-solid fa-trash"></i></button>
                                 </div>`;
                         } else {
-                            controls = `<span class="text-xl font-bold text-[#5D93E1] px-2">今日: ${displayToday}</span>`;
+                            // 女生介面：使用計算過的 displayToday
+                            controls = `<span class="text-xl font-bold text-[#5D93E1] px-2 whitespace-nowrap">今日: ${displayToday}</span>`;
                         }
+                        
                         list.innerHTML += `
                         <div class="bg-white p-3 rounded-xl soft-shadow flex items-center justify-between mb-2 relative" data-id="${doc.id}">
                             <div class="flex items-center flex-1">${dragHandle}
@@ -1067,6 +1056,7 @@
                             </div>${controls}${menuBtn}
                         </div>`;
                     });
+                    
                     if(myRole === 'Boy' && !sortableInstance) {
                         sortableInstance = new Sortable(list, { handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost', onEnd: function (evt) { updateOrder(); }, });
                     }
@@ -1094,8 +1084,9 @@
             const newVal = prompt("修改庫存數量：", current);
             if(newVal !== null && !isNaN(newVal)) db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: Number(newVal) });
         }
+        
         function changeSmokeCount(id, brandName, delta, currentToday, currentStock, lastDate) {
-            const todayStr = getLogicalDateStr();
+            const todayStr = getLogicalDateStr(); // 確保使用6點分界的日期
             let newToday = currentToday;
             if (lastDate !== todayStr) newToday = 0;
             newToday += delta;
@@ -1105,53 +1096,103 @@
             db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: newStock, todayCount: newToday, lastUpdated: todayStr });
             logHistory(brandName, delta, newStock); 
         }
+        
         function openNewPack(id, brandName, currentStock) {
             const newStock = currentStock + 20;
             db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: newStock });
             logPackOpen(brandName, newStock);
         }
         
+        // 🔥 修正：確保詳細紀錄以物件結構寫入
         function logHistory(brandName, delta, newStock) {
-            const todayStr = getLogicalDateStr();
+            const todayStr = getLogicalDateStr(); // 使用6點分界
             const logRef = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(todayStr);
-            const updateData = { total: firebase.firestore.FieldValue.increment(delta), date: todayStr };
-            updateData[`details.${brandName}`] = firebase.firestore.FieldValue.increment(delta);
-            updateData[`stocks.${brandName}`] = newStock;
-            logRef.set(updateData, { merge: true });
+            
+            logRef.get().then(doc => {
+                if (doc.exists) {
+                    const updatePayload = {};
+                    updatePayload['total'] = firebase.firestore.FieldValue.increment(delta);
+                    updatePayload[`details.${brandName}`] = firebase.firestore.FieldValue.increment(delta);
+                    updatePayload[`stocks.${brandName}`] = newStock;
+                    logRef.update(updatePayload);
+                } else {
+                    const newPayload = {
+                        date: todayStr,
+                        total: delta,
+                        details: { [brandName]: delta },
+                        stocks: { [brandName]: newStock },
+                        packsOpened: []
+                    };
+                    logRef.set(newPayload);
+                }
+            });
         }
+
         function logPackOpen(brandName, newStock) {
             const todayStr = getLogicalDateStr();
             const logRef = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(todayStr);
-            const updateData = { packsOpened: firebase.firestore.FieldValue.arrayUnion(brandName), date: todayStr };
-            updateData[`stocks.${brandName}`] = newStock;
-            logRef.set(updateData, { merge: true });
+            
+            logRef.get().then(doc => {
+                if(doc.exists) {
+                     logRef.update({
+                        packsOpened: firebase.firestore.FieldValue.arrayUnion(brandName),
+                        [`stocks.${brandName}`]: newStock
+                     });
+                } else {
+                     logRef.set({
+                        date: todayStr,
+                        total: 0,
+                        details: {},
+                        stocks: { [brandName]: newStock },
+                        packsOpened: [brandName]
+                     });
+                }
+            });
         }
         
+        // 🔥 修正：優化詳細歷史顯示
         function showGlobalHistory() {
             const modal = document.getElementById('modal-history');
             const list = document.getElementById('hist-list');
             modal.style.display = 'flex';
             list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">載入中...</div>';
+
             db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").limit(14).get().then(snapshot => {
                 list.innerHTML = '';
-                if(snapshot.empty) { list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">暫無歷史紀錄</div>'; return; }
+                if(snapshot.empty) { 
+                    list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">暫無歷史紀錄</div>'; 
+                    return; 
+                }
+                
                 let docs = [];
                 snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
                 docs.sort((a, b) => b.id.localeCompare(a.id));
+
                 docs.forEach(d => {
                     const date = d.id;
                     const total = d.total || 0;
-                    const details = d.details || {};
+                    const details = d.details || {}; 
                     const stocks = d.stocks || {}; 
                     const packs = d.packsOpened || [];
                     
-                    let detailStr = Object.entries(details).map(([k, v]) => {
-                        const stockInfo = stocks[k] !== undefined ? ` <span class='text-gray-300'>(庫存 ${stocks[k]})</span>` : '';
-                        return `${k}: ${v}${stockInfo}`;
-                    }).join('<br>');
+                    let detailItems = [];
+                    if (details && Object.keys(details).length > 0) {
+                        Object.entries(details).forEach(([brand, count]) => {
+                            if (count !== 0 || stocks[brand] !== undefined) {
+                                const stockInfo = stocks[brand] !== undefined ? `<span class="text-gray-400 font-normal scale-90 ml-1">(餘${stocks[brand]})</span>` : '';
+                                detailItems.push(`
+                                    <span class="inline-block bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 mr-1 mb-1 text-xs text-gray-600">
+                                        ${brand}: <span class="font-bold text-[#5D93E1] text-sm">${count}</span>${stockInfo}
+                                    </span>
+                                `);
+                            }
+                        });
+                    }
                     
-                    let packStr = packs.length > 0 ? `<div class="text-[10px] text-[#5D93E1] mt-1"><i class="fa-solid fa-box-open"></i> 開了: ${packs.join(', ')}</div>` : '';
-                    if(!detailStr) detailStr = "無詳細資料";
+                    let detailStr = detailItems.join('');
+                    if(!detailStr) detailStr = "<span class='text-gray-300 text-xs italic pl-1'>無詳細分類資料</span>";
+
+                    let packStr = packs.length > 0 ? `<div class="text-[10px] text-[#5D93E1] mt-2 bg-[#ECF4FF] inline-block px-2 py-1 rounded"><i class="fa-solid fa-box-open mr-1"></i>開了: ${packs.join(', ')}</div>` : '';
                     
                     let editBtn = '';
                     if (myRole === 'Girl') {
@@ -1159,14 +1200,22 @@
                     }
 
                     list.innerHTML += `
-                        <div class="border-b border-gray-100 py-3">
-                            <div class="flex justify-between items-center"><span class="text-gray-700 font-bold">${date}</span><span class="text-[#5D93E1] font-bold text-lg">${total} 根 ${editBtn}</span></div>
-                            <div class="text-xs text-gray-400 mt-1 leading-relaxed">${detailStr}</div>${packStr}
+                        <div class="bg-white p-4 rounded-xl soft-shadow mb-3 border border-transparent hover:border-[#5D93E1]/20 transition">
+                            <div class="flex justify-between items-center mb-2 border-b border-gray-100 pb-2">
+                                <span class="text-gray-700 font-bold text-sm"><i class="fa-regular fa-calendar mr-2 text-gray-400"></i>${date}</span>
+                                <span class="text-[#5D93E1] font-bold text-lg">${total} <span class="text-xs text-gray-400 font-normal">根</span>${editBtn}</span>
+                            </div>
+                            <div class="flex flex-wrap items-center mt-1">
+                                ${detailStr}
+                            </div>
+                            ${packStr}
                         </div>`;
                 });
             });
         }
+        
         function closeHistory() { document.getElementById('modal-history').style.display = 'none'; }
+        
         function editHistoryLog(date, currentTotal) {
             const newVal = prompt(`修正 ${date} 的總抽菸數：`, currentTotal);
             if(newVal !== null && !isNaN(newVal)) db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(date).update({ total: Number(newVal) }).then(() => { alert("修改成功！"); showGlobalHistory(); });
