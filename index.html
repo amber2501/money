@@ -40,10 +40,8 @@
         .day-pill { transition: all 0.2s; min-width: 48px; }
         .day-pill.active { background-color: #5D93E1; color: white; box-shadow: 0 4px 10px rgba(93, 147, 225, 0.4); transform: scale(1.05); border-color: transparent; }
 
-        /* 行事曆格子樣式 */
         .cal-cell { aspect-ratio: 1/1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; cursor: pointer; position: relative; transition: all 0.2s; border: 2px solid transparent; overflow: hidden; }
         
-        /* 選中狀態 (強制深色背景，白字) */
         .cal-cell.selected { 
             background: #333 !important; 
             border-color: #333 !important; 
@@ -52,13 +50,10 @@
             z-index: 20; 
         }
         .cal-cell.selected span { color: white !important; font-weight: bold; }
-        /* 選中時假日文字變淡白 */
         .cal-cell.selected .holiday-label { color: rgba(255,255,255,0.7) !important; }
 
-        /* 今天狀態 */
         .cal-cell.today { border: 2px solid #5D93E1; font-weight: bold; }
 
-        /* 🔥 行程背景色塊 */
         .event-boy { background-color: #ECF4FF; color: #3A6EA5; }
         .event-girl { background-color: #FFF0F0; color: #E5989B; }
         .event-mix { background: linear-gradient(135deg, #ECF4FF 50%, #FFF0F0 50%); }
@@ -306,19 +301,16 @@
                     </div>
 
                     <div class="flex items-center gap-4 ml-1 mb-2">
-                        <!-- 全天開關 -->
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="event-allday" onchange="toggleEventTimeInputs()" checked>
                             <label for="event-allday" class="text-sm text-gray-600 font-bold cursor-pointer">全天行程</label>
                         </div>
-                        <!-- 對方同行開關 -->
                         <div class="flex items-center gap-2">
                             <input type="checkbox" id="event-partner">
                             <label for="event-partner" class="text-sm text-gray-600 font-bold cursor-pointer">對方同行</label>
                         </div>
                     </div>
 
-                    <!-- 開始時間 -->
                     <div class="flex gap-2">
                         <div class="flex-1">
                             <p class="text-[10px] text-gray-400 mb-1">開始日期</p>
@@ -330,7 +322,6 @@
                         </div>
                     </div>
 
-                    <!-- 結束時間 -->
                     <div class="flex gap-2">
                         <div class="flex-1">
                             <p class="text-[10px] text-gray-400 mb-1">結束日期</p>
@@ -449,10 +440,9 @@
             ]
         };
 
-        // 🔥 關鍵函式：取得邏輯日期 (早上6點前都算前一天)
         function getLogicalDateStr() {
             const now = new Date();
-            now.setHours(now.getHours() - 6); // 減去6小時，確保6點為分界線
+            now.setHours(now.getHours() - 6);
             const y = now.getFullYear();
             const m = String(now.getMonth() + 1).padStart(2, '0');
             const d = String(now.getDate()).padStart(2, '0');
@@ -506,15 +496,11 @@
         function updateNameDisplay() {
             document.getElementById('name-display-Boy').innerText = boyName;
             document.getElementById('name-display-Girl').innerText = girlName;
-            
             const btnBoy = document.getElementById('role-btn-name-Boy');
             const btnGirl = document.getElementById('role-btn-name-Girl');
             if(btnBoy) btnBoy.innerText = "我是 " + boyName;
             if(btnGirl) btnGirl.innerText = "我是 " + girlName;
-
-            if(document.getElementById('page-calendar').classList.contains('active')) {
-                renderDayEvents();
-            }
+            if(document.getElementById('page-calendar').classList.contains('active')) renderDayEvents();
         }
 
         function editName(role) {
@@ -548,29 +534,18 @@
         function renderDayBar() {
             const bar = document.getElementById('day-bar');
             bar.innerHTML = '';
-            
             const parts = currentMonthStr.split('-');
             const year = parseInt(parts[0]);
             const month = parseInt(parts[1]);
             const daysInMonth = new Date(year, month, 0).getDate();
-            
             const allActive = currentDayFilter === null ? 'active' : 'bg-white text-gray-400 border border-gray-100 hover:bg-gray-50';
-            bar.innerHTML += `
-                <button onclick="selectDay(null)" class="day-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap ${allActive}">
-                    全部
-                </button>`;
-
+            bar.innerHTML += `<button onclick="selectDay(null)" class="day-pill px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap ${allActive}">全部</button>`;
             const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
             for(let d = 1; d <= daysInMonth; d++) {
                 const dateObj = new Date(year, month - 1, d);
                 const dayName = weekDays[dateObj.getDay()];
                 const isActive = currentDayFilter === d ? 'active' : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50';
-                
-                bar.innerHTML += `
-                    <button onclick="selectDay(${d})" class="day-pill px-3 py-2 rounded-2xl flex flex-col items-center justify-center gap-0.5 ${isActive}">
-                        <span class="text-[10px] opacity-70">${dayName}</span>
-                        <span class="text-sm font-bold leading-none">${d}</span>
-                    </button>`;
+                bar.innerHTML += `<button onclick="selectDay(${d})" class="day-pill px-3 py-2 rounded-2xl flex flex-col items-center justify-center gap-0.5 ${isActive}"><span class="text-[10px] opacity-70">${dayName}</span><span class="text-sm font-bold leading-none">${d}</span></button>`;
             }
         }
 
@@ -588,20 +563,17 @@
                 .onSnapshot((snapshot) => {
                     allTransactionsList = [];
                     transactionsData = {};
-                    
                     snapshot.forEach(doc => {
                         const d = doc.data();
                         const id = doc.id;
                         allTransactionsList.push({ id, ...d });
                         transactionsData[id] = d; 
                     });
-                    
                     allTransactionsList.sort((a, b) => { 
                         let t1 = a.timestamp ? a.timestamp.seconds : 0; 
                         let t2 = b.timestamp ? b.timestamp.seconds : 0; 
                         return t2 - t1; 
                     });
-
                     renderCurrentMonth();
                 });
         }
@@ -609,11 +581,7 @@
         function renderCurrentMonth() {
             const list = document.getElementById('tx-list');
             list.innerHTML = '';
-            
-            let total = 0; 
-            let totalIncome = 0; 
-            let totalExpense = 0;
-            
+            let total = 0, totalIncome = 0, totalExpense = 0;
             let filteredDocs = allTransactionsList.filter(d => {
                 if(!d.timestamp) return false;
                 const date = d.timestamp.toDate();
@@ -621,7 +589,6 @@
                 const m = String(date.getMonth() + 1).padStart(2, '0');
                 return `${y}-${m}` === currentMonthStr;
             });
-
             filteredDocs.forEach(d => {
                 const amt = Number(d.amount);
                 if(d.type === 'expense') { total -= amt; totalExpense += amt; } 
@@ -631,128 +598,68 @@
             document.getElementById('total-balance').style.color = currentView === 'Boy' ? '#5D93E1' : '#E5989B';
             document.getElementById('total-income').innerText = totalIncome;
             document.getElementById('total-expense').innerText = totalExpense;
-
-            if (currentDayFilter !== null) {
-                filteredDocs = filteredDocs.filter(d => {
-                    const date = d.timestamp.toDate();
-                    return date.getDate() === currentDayFilter;
-                });
-            }
-
-            if(filteredDocs.length === 0) {
-                const tipText = currentDayFilter ? `${currentDayFilter}號 沒有紀錄` : `${currentMonthStr} 沒有紀錄`;
-                list.innerHTML = `<div class="text-center text-gray-300 text-xs mt-10">${tipText}</div>`;
-            }
-
+            if (currentDayFilter !== null) filteredDocs = filteredDocs.filter(d => d.timestamp.toDate().getDate() === currentDayFilter);
+            if(filteredDocs.length === 0) list.innerHTML = `<div class="text-center text-gray-300 text-xs mt-10">${currentDayFilter ? currentDayFilter+'號' : currentMonthStr} 沒有紀錄</div>`;
             const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
             let lastDateStr = '';
-
             filteredDocs.forEach(d => {
                 const isExp = d.type === 'expense';
                 const amt = Number(d.amount);
-                
                 let timeStr = "";
-                
                 if(d.timestamp) {
                     const date = d.timestamp.toDate();
-                    const mm = (date.getMonth()+1).toString(); 
-                    const dd = date.getDate().toString();
-                    const day = weekDays[date.getDay()];
-                    
-                    const currentDateStr = `${mm}月${dd}日 ${day}`;
-
+                    const currentDateStr = `${date.getMonth()+1}月${date.getDate()}日 ${weekDays[date.getDay()]}`;
                     if (currentDayFilter === null && currentDateStr !== lastDateStr) {
                         list.innerHTML += `<div class="text-xs text-gray-400 font-bold mt-4 mb-2 ml-2 pl-2 border-l-2 border-[#5D93E1]">${currentDateStr}</div>`;
                         lastDateStr = currentDateStr;
                     }
-
-                    const hh = date.getHours().toString().padStart(2,'0'); 
-                    const min = date.getMinutes().toString().padStart(2,'0');
-                    timeStr = `${hh}:${min}`;
+                    timeStr = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
                 }
-
                 const color = isExp ? 'text-[#E5989B]' : 'text-[#5D93E1]';
-                const catList = CATEGORIES[d.type] || CATEGORIES.expense;
-                const catObj = catList.find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
-                const displayTitle = d.title ? d.title : catObj.name;
-                
-                const bgClass = isExp ? 'bg-[#FFDFD3] text-[#E5989B]' : 'bg-[#ECF4FF] text-[#5D93E1]';
-
+                const catObj = (CATEGORIES[d.type] || CATEGORIES.expense).find(c => c.id === d.category) || { icon: 'fa-tag', name: '一般' };
                 list.innerHTML += `
-                <div onclick="openModal('${d.id}')" 
-                     class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full ${bgClass} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
-                                <div><p class="font-bold text-gray-700">${displayTitle}</p><p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p></div>
-                            </div>
-                            <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
+                <div onclick="openModal('${d.id}')" class="bg-white p-4 rounded-2xl flex items-center justify-between soft-shadow mb-3 cursor-pointer hover:bg-gray-50 transition active:scale-95">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full ${isExp?'bg-[#FFDFD3] text-[#E5989B]':'bg-[#ECF4FF] text-[#5D93E1]'} flex items-center justify-center text-lg"><i class="fa-solid ${catObj.icon}"></i></div>
+                        <div><p class="font-bold text-gray-700">${d.title || catObj.name}</p><p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-clock text-[10px] mr-1"></i>${timeStr}</p></div>
+                    </div>
+                    <span class="font-bold ${color} text-lg">${isExp?'-':'+'} ${amt}</span>
                 </div>`;
             });
         }
 
-        // --- 行事曆 ---
-
         function initCalendarListener() {
             if(calendarUnsubscribe) calendarUnsubscribe();
-            calendarUnsubscribe = db.collection("rooms").doc(myRoomId).collection("events")
-                .onSnapshot((snapshot) => {
-                    allEventsList = [];
-                    snapshot.forEach(doc => {
-                        allEventsList.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderCalendar(); 
-                    renderDayEvents(); 
-                });
+            calendarUnsubscribe = db.collection("rooms").doc(myRoomId).collection("events").onSnapshot((snapshot) => {
+                allEventsList = [];
+                snapshot.forEach(doc => allEventsList.push({ id: doc.id, ...doc.data() }));
+                renderCalendar(); 
+                renderDayEvents(); 
+            });
         }
 
-        function changeCalMonth(delta) {
-            calCurrentDate.setMonth(calCurrentDate.getMonth() + delta);
-            renderCalendar();
-        }
-
-        function handleCalPickerChange() {
-            const picker = document.getElementById('cal-picker');
-            if(picker.value) {
-                calCurrentDate = new Date(picker.value + "-01");
-                renderCalendar();
-            }
-        }
+        function changeCalMonth(delta) { calCurrentDate.setMonth(calCurrentDate.getMonth() + delta); renderCalendar(); }
+        function handleCalPickerChange() { const p = document.getElementById('cal-picker'); if(p.value) { calCurrentDate = new Date(p.value + "-01"); renderCalendar(); } }
 
         function renderCalendar() {
             const grid = document.getElementById('cal-grid');
             const title = document.getElementById('cal-title');
             grid.innerHTML = '';
-            
             const year = calCurrentDate.getFullYear();
             const month = calCurrentDate.getMonth();
-            
             title.innerText = `${year}-${String(month + 1).padStart(2,'0')}`;
-            const picker = document.getElementById('cal-picker');
-            picker.value = `${year}-${String(month + 1).padStart(2,'0')}`;
-            
+            document.getElementById('cal-picker').value = `${year}-${String(month + 1).padStart(2,'0')}`;
             const firstDay = new Date(year, month, 1).getDay(); 
             const daysInMonth = new Date(year, month + 1, 0).getDate(); 
-
-            for(let i=0; i<firstDay; i++) {
-                grid.innerHTML += `<div></div>`;
-            }
-
+            for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
             for(let d=1; d<=daysInMonth; d++) {
                 const fullDateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const shortDateStr = `${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                
-                const holidayName = TAIWAN_HOLIDAYS[fullDateStr] || TAIWAN_HOLIDAYS[shortDateStr];
-                
+                const holidayName = TAIWAN_HOLIDAYS[fullDateStr] || TAIWAN_HOLIDAYS[`${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`];
                 const weekDay = new Date(year, month, d).getDay();
                 const isWeekend = (weekDay === 0 || weekDay === 6);
-                
                 let numColorClass = (isWeekend || holidayName) ? "text-red-500 font-bold" : "text-gray-700";
-
                 const currentDayTime = new Date(year, month, d).getTime();
-                let hasBoy = false;
-                let hasGirl = false;
-                let isMix = false;
-
+                let hasBoy = false, hasGirl = false, isMix = false;
                 allEventsList.forEach(e => {
                     const eStart = new Date(e.startDate + 'T00:00:00').getTime();
                     const eEnd = e.endDate ? new Date(e.endDate + 'T00:00:00').getTime() : eStart;
@@ -762,134 +669,54 @@
                         if (e.withPartner) isMix = true; 
                     }
                 });
-
                 if (hasBoy && hasGirl) isMix = true;
-
-                let bgClass = "";
-                if (isMix) bgClass = "event-mix";
-                else if (hasBoy) bgClass = "event-boy";
-                else if (hasGirl) bgClass = "event-girl";
-
-                const isSelected = calSelectedDate.getFullYear() === year && 
-                                   calSelectedDate.getMonth() === month && 
-                                   calSelectedDate.getDate() === d;
-                
-                const today = new Date();
-                const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
-
-                const classes = `cal-cell ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${bgClass}`;
-                
-                let holidayHtml = holidayName ? `<span class="holiday-label text-[10px] text-red-400 absolute bottom-0.5 scale-90 whitespace-nowrap leading-none">${holidayName}</span>` : '';
-
-                if(isSelected) numColorClass = "text-white font-bold";
-
-                grid.innerHTML += `
-                    <div onclick="selectCalDate(${year}, ${month}, ${d})" class="${classes}">
-                        <span class="${numColorClass}">${d}</span>
-                        ${holidayHtml}
-                    </div>`;
+                const isSelected = calSelectedDate.getFullYear() === year && calSelectedDate.getMonth() === month && calSelectedDate.getDate() === d;
+                const isToday = new Date().toDateString() === new Date(year, month, d).toDateString();
+                grid.innerHTML += `<div onclick="selectCalDate(${year}, ${month}, ${d})" class="cal-cell ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${isMix?'event-mix':hasBoy?'event-boy':hasGirl?'event-girl':''}">
+                    <span class="${isSelected ? 'text-white font-bold' : numColorClass}">${d}</span>
+                    ${holidayName ? `<span class="holiday-label text-[10px] text-red-400 absolute bottom-0.5 scale-90 whitespace-nowrap leading-none">${holidayName}</span>` : ''}
+                </div>`;
             }
         }
 
-        function selectCalDate(year, month, d) {
-            calSelectedDate = new Date(year, month, d);
-            renderCalendar();
-            renderDayEvents();
-        }
+        function selectCalDate(y, m, d) { calSelectedDate = new Date(y, m, d); renderCalendar(); renderDayEvents(); }
 
         function renderDayEvents() {
             const list = document.getElementById('event-list');
             const dateLabel = document.getElementById('cal-selected-date');
-            
-            const y = calSelectedDate.getFullYear();
-            const m = String(calSelectedDate.getMonth() + 1).padStart(2,'0');
-            const d = String(calSelectedDate.getDate()).padStart(2,'0');
-            const targetDateStr = `${y}-${m}-${d}`;
-            const targetTime = new Date(targetDateStr + 'T00:00:00').getTime();
-            
-            const weekDays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-            dateLabel.innerText = `${m}月${d}日 ${weekDays[calSelectedDate.getDay()]}`;
-
-            // 篩選出包含選中日期的活動
+            const y = calSelectedDate.getFullYear(), m = String(calSelectedDate.getMonth() + 1).padStart(2,'0'), d = String(calSelectedDate.getDate()).padStart(2,'0');
+            const targetDateStr = `${y}-${m}-${d}`, targetTime = new Date(targetDateStr + 'T00:00:00').getTime();
+            dateLabel.innerText = `${m}月${d}日 ${['週日', '週一', '週二', '週三', '週四', '週五', '週六'][calSelectedDate.getDay()]}`;
             const events = allEventsList.filter(e => {
                 const start = new Date(e.startDate + 'T00:00:00').getTime();
                 const end = e.endDate ? new Date(e.endDate + 'T00:00:00').getTime() : start;
                 return targetTime >= start && targetTime <= end;
             });
-
-            list.innerHTML = '';
-
-            if (events.length === 0) {
-                list.innerHTML = `<div class="text-center text-xs text-gray-300 mt-10">當日無行程</div>`;
-                return;
-            }
-
+            list.innerHTML = events.length ? '' : `<div class="text-center text-xs text-gray-300 mt-10">當日無行程</div>`;
             events.forEach(e => {
-                const borderColor = e.creator === 'Boy' ? 'border-[#5D93E1]' : 'border-[#E5989B]';
                 const creatorName = e.creator === 'Boy' ? boyName : girlName;
-                
-                let timeDisplay = "全天";
-                if (!e.isAllDay && e.startTime) {
-                    timeDisplay = `${e.startTime}`;
-                    if (e.endTime) timeDisplay += ` - ${e.endTime}`;
-                }
-
-                const start = new Date(e.startDate + 'T00:00:00').getTime();
-                const end = e.endDate ? new Date(e.endDate + 'T00:00:00').getTime() : start;
-                const diffTime = Math.abs(end - start);
-                const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                
-                let dayInfo = "";
-                if (totalDays > 1) {
-                    const currentDiff = Math.abs(targetTime - start);
-                    const currentDay = Math.ceil(currentDiff / (1000 * 60 * 60 * 24)) + 1;
-                    dayInfo = `<span class="text-xs text-gray-400 ml-2">(第 ${currentDay}/${totalDays} 天)</span>`;
-                }
-
-                const eventJson = JSON.stringify(e).replace(/"/g, '&quot;');
-                let partnerIcon = e.withPartner ? '<i class="fa-solid fa-user-group text-xs ml-2 text-gray-400" title="對方同行"></i>' : '';
-
+                let timeDisplay = e.isAllDay ? "全天" : (e.startTime + (e.endTime ? ` - ${e.endTime}` : ""));
+                const totalDays = Math.ceil(Math.abs(new Date(e.endDate + 'T00:00:00').getTime() - new Date(e.startDate + 'T00:00:00').getTime()) / 86400000) + 1;
+                let dayInfo = totalDays > 1 ? `<span class="text-xs text-gray-400 ml-2">(第 ${Math.ceil(Math.abs(targetTime - new Date(e.startDate + 'T00:00:00').getTime()) / 86400000) + 1}/${totalDays} 天)</span>` : "";
                 list.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl soft-shadow border-l-4 ${borderColor} flex justify-between items-center relative group">
-                        <div>
-                            <div class="flex items-center">
-                                <p class="font-bold text-gray-700 text-lg">${e.title}</p>
-                                ${dayInfo} ${partnerIcon}
-                            </div>
-                            <div class="flex items-center gap-2 mt-1">
-                                <p class="text-xs text-[#5D93E1] bg-[#ECF4FF] px-2 py-0.5 rounded font-bold">${timeDisplay}</p>
-                                <p class="text-xs text-gray-400">由 ${creatorName} 建立</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <button onclick="openEditEventModal(${eventJson})" class="text-gray-300 hover:text-[#5D93E1]"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteEvent('${e.id}')" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
+                    <div class="bg-white p-4 rounded-xl soft-shadow border-l-4 ${e.creator==='Boy'?'border-[#5D93E1]':'border-[#E5989B]'} flex justify-between items-center relative">
+                        <div><div class="flex items-center"><p class="font-bold text-gray-700 text-lg">${e.title}</p>${dayInfo}${e.withPartner?'<i class="fa-solid fa-user-group text-xs ml-2 text-gray-400"></i>':''}</div>
+                        <div class="flex items-center gap-2 mt-1"><p class="text-xs text-[#5D93E1] bg-[#ECF4FF] px-2 py-0.5 rounded font-bold">${timeDisplay}</p><p class="text-xs text-gray-400">由 ${creatorName} 建立</p></div></div>
+                        <div class="flex gap-3"><button onclick='openEditEventModal(${JSON.stringify(e).replace(/'/g, "\\'")})' class="text-gray-300 hover:text-[#5D93E1]"><i class="fa-solid fa-pen"></i></button><button onclick="deleteEvent('${e.id}')" class="text-gray-300 hover:text-red-400"><i class="fa-solid fa-trash"></i></button></div>
+                    </div>`;
             });
         }
 
-        // --- 彈窗相關 ---
         function openEventModal() {
             editingEventId = null;
             document.getElementById('modal-event').style.display = 'flex';
             document.getElementById('event-modal-title').innerText = "新增行程";
-            document.getElementById('btn-save-event').innerText = "新增行程";
-            
-            const y = calSelectedDate.getFullYear();
-            const m = String(calSelectedDate.getMonth() + 1).padStart(2,'0');
-            const d = String(calSelectedDate.getDate()).padStart(2,'0');
-            const defaultDate = `${y}-${m}-${d}`;
-
+            const date = `${calSelectedDate.getFullYear()}-${String(calSelectedDate.getMonth()+1).padStart(2,'0')}-${String(calSelectedDate.getDate()).padStart(2,'0')}`;
             document.getElementById('event-title').value = '';
             document.getElementById('event-allday').checked = true;
             document.getElementById('event-partner').checked = false;
-            document.getElementById('event-start-date').value = defaultDate;
-            document.getElementById('event-end-date').value = defaultDate;
-            document.getElementById('event-start-time').value = "09:00";
-            document.getElementById('event-end-time').value = "10:00";
-            
+            document.getElementById('event-start-date').value = date;
+            document.getElementById('event-end-date').value = date;
             toggleEventTimeInputs();
         }
 
@@ -897,489 +724,167 @@
             editingEventId = e.id;
             document.getElementById('modal-event').style.display = 'flex';
             document.getElementById('event-modal-title').innerText = "編輯行程";
-            document.getElementById('btn-save-event').innerText = "儲存變更";
-
             document.getElementById('event-title').value = e.title;
             document.getElementById('event-allday').checked = e.isAllDay;
-            document.getElementById('event-partner').checked = e.withPartner || false;
+            document.getElementById('event-partner').checked = e.withPartner;
             document.getElementById('event-start-date').value = e.startDate;
-            document.getElementById('event-end-date').value = e.endDate || e.startDate;
+            document.getElementById('event-end-date').value = e.endDate;
             document.getElementById('event-start-time').value = e.startTime || "09:00";
             document.getElementById('event-end-time').value = e.endTime || "10:00";
-
             toggleEventTimeInputs();
         }
 
-        function closeEventModal() {
-            document.getElementById('modal-event').style.display = 'none';
-        }
-
-        function toggleEventTimeInputs() {
-            const isAllDay = document.getElementById('event-allday').checked;
-            const timeInputs = document.querySelectorAll('.time-input');
-            timeInputs.forEach(el => {
-                if (isAllDay) el.classList.add('hidden');
-                else el.classList.remove('hidden');
-            });
-        }
-
-        function syncEndDate() {
-            const start = document.getElementById('event-start-date').value;
-            const endInput = document.getElementById('event-end-date');
-            if (start && !editingEventId) { 
-                if (!endInput.value || endInput.value < start) {
-                    endInput.value = start;
-                }
-            }
-        }
+        function closeEventModal() { document.getElementById('modal-event').style.display = 'none'; }
+        function toggleEventTimeInputs() { const isAllDay = document.getElementById('event-allday').checked; document.querySelectorAll('.time-input').forEach(el => isAllDay ? el.classList.add('hidden') : el.classList.remove('hidden')); }
+        function syncEndDate() { const s = document.getElementById('event-start-date').value; const e = document.getElementById('event-end-date'); if(s && (!e.value || e.value < s)) e.value = s; }
 
         function saveEvent() {
             const title = document.getElementById('event-title').value.trim();
-            const isAllDay = document.getElementById('event-allday').checked;
-            const withPartner = document.getElementById('event-partner').checked;
-            const startDate = document.getElementById('event-start-date').value;
-            let endDate = document.getElementById('event-end-date').value;
-            const startTime = document.getElementById('event-start-time').value;
-            const endTime = document.getElementById('event-end-time').value;
-
-            if(!title) return alert("請輸入行程名稱");
-            if(!startDate) return alert("請選擇開始日期");
-            if(!endDate) endDate = startDate;
-            
-            if(endDate < startDate) return alert("結束日期不能早於開始日期");
-
+            const start = document.getElementById('event-start-date').value;
+            if(!title || !start) return alert("請填寫名稱與日期");
             const btn = document.getElementById('btn-save-event');
-            const oldText = btn.innerText;
             btn.innerText = "處理中...";
-
-            const eventData = {
-                title,
-                isAllDay,
-                withPartner,
-                startDate,
-                endDate,
-                startTime: isAllDay ? "" : startTime,
-                endTime: isAllDay ? "" : endTime,
-                creator: myRole, 
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
+            const data = { title, isAllDay: document.getElementById('event-allday').checked, withPartner: document.getElementById('event-partner').checked, startDate: start, endDate: document.getElementById('event-end-date').value || start, startTime: document.getElementById('event-start-time').value, endTime: document.getElementById('event-end-time').value, creator: myRole, lastUpdated: firebase.firestore.FieldValue.serverTimestamp() };
             const ref = db.collection("rooms").doc(myRoomId).collection("events");
-            
-            let promise;
-            if (editingEventId) {
-                promise = ref.doc(editingEventId).update(eventData);
-            } else {
-                eventData.date = startDate; 
-                eventData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                promise = ref.add(eventData);
-            }
-
-            promise.then(() => {
-                closeEventModal();
-                btn.innerText = oldText;
-            }).catch(err => {
-                alert("儲存失敗");
-                btn.innerText = oldText;
-            });
+            (editingEventId ? ref.doc(editingEventId).update(data) : ref.add(data)).then(() => { closeEventModal(); btn.innerText = "儲存"; }).catch(() => { alert("失敗"); btn.innerText = "儲存"; });
         }
+        function deleteEvent(id) { if(confirm("刪除行程？")) db.collection("rooms").doc(myRoomId).collection("events").doc(id).delete(); }
 
-        function deleteEvent(id) {
-            if(confirm("刪除此行程？")) {
-                db.collection("rooms").doc(myRoomId).collection("events").doc(id).delete();
-            }
-        }
-
-
-        // --- 香菸與歷史紀錄 (已修正邏輯) ---
-
-        // 🔥 修正：初始化香菸監聽，加入跨日歸零判斷
         function initSmokeListener() {
             if(smokeUnsubscribe) smokeUnsubscribe();
-            
-            const addArea = document.getElementById('smoke-add-area');
-            const dragHint = document.getElementById('drag-hint');
-            if (myRole === 'Boy') { 
-                addArea.classList.remove('hidden'); 
-                dragHint.classList.remove('hidden'); 
-            } else { 
-                addArea.classList.add('hidden'); 
-                dragHint.classList.add('hidden'); 
-            }
-
-            smokeUnsubscribe = db.collection("rooms").doc(myRoomId).collection("smokes")
-                .orderBy("order", "asc")
-                .onSnapshot((snapshot) => {
-                    const list = document.getElementById('smoke-list');
-                    list.innerHTML = '';
-                    currentTotalStock = 0;
-
-                    if(snapshot.empty) { list.innerHTML = `<div class="text-center text-gray-300 text-sm mt-10">暫無品牌</div>`; return; }
-
-                    snapshot.forEach(doc => {
-                        const d = doc.data();
-                        currentTotalStock += (d.stock || 0);
-                        
-                        // 🔥 修正邏輯：比較資料庫日期與邏輯日期 (6點分界)
-                        // 如果資料庫的 lastUpdated 不是今天，強制將顯示的 todayCount 設為 0
-                        const todayStr = getLogicalDateStr();
-                        let displayToday = d.todayCount || 0;
-                        if(d.lastUpdated !== todayStr) {
-                            displayToday = 0; 
-                        }
-
-                        let controls = '', stockEdit = '', dragHandle = '', menuBtn = '';
-                        
-                        if(myRole === 'Boy') {
-                            dragHandle = `<div class="drag-handle text-gray-300 mr-3 cursor-move px-2"><i class="fa-solid fa-bars"></i></div>`;
-                            stockEdit = `<button onclick="editStock('${doc.id}', ${d.stock})" class="text-gray-300 hover:text-[#5D93E1] ml-1"><i class="fa-solid fa-pen text-[10px]"></i></button>`;
-                            controls = `
-                                <div class="flex items-center gap-3">
-                                    <button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', -1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold active:bg-gray-200">-</button>
-                                    <span class="text-xl font-bold text-[#5D93E1] w-6 text-center">${displayToday}</span>
-                                    <button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', 1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-[#5D93E1] text-white font-bold shadow-md active:scale-95">+</button>
-                                </div>`;
-                            menuBtn = `
-                                <div class="flex flex-col gap-2 ml-4 border-l border-gray-100 pl-4 items-center justify-center">
-                                    <button onclick="openNewPack('${doc.id}', '${d.brandName}', ${d.stock})" class="text-xs bg-[#ECF4FF] text-[#5D93E1] px-2 py-1 rounded font-bold whitespace-nowrap active:scale-95">開新包</button>
-                                    <button onclick="deleteSmokeBrand('${doc.id}')" class="text-gray-300 text-xs hover:text-red-400 mt-1"><i class="fa-solid fa-trash"></i></button>
-                                </div>`;
-                        } else {
-                            // 女生介面：使用計算過的 displayToday
-                            controls = `<span class="text-xl font-bold text-[#5D93E1] px-2 whitespace-nowrap">今日: ${displayToday}</span>`;
-                        }
-                        
-                        list.innerHTML += `
-                        <div class="bg-white p-3 rounded-xl soft-shadow flex items-center justify-between mb-2 relative" data-id="${doc.id}">
-                            <div class="flex items-center flex-1">${dragHandle}
-                                <div class="flex-1"><h3 class="font-bold text-gray-700 text-sm">${d.brandName}</h3><p class="text-xs text-gray-400 mt-1">庫存: <span class="font-bold text-gray-600">${d.stock}</span> ${stockEdit}</p></div>
-                            </div>${controls}${menuBtn}
-                        </div>`;
-                    });
-                    
-                    if(myRole === 'Boy' && !sortableInstance) {
-                        sortableInstance = new Sortable(list, { handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost', onEnd: function (evt) { updateOrder(); }, });
-                    }
+            const isBoy = myRole === 'Boy';
+            document.getElementById('smoke-add-area').classList.toggle('hidden', !isBoy);
+            document.getElementById('drag-hint').classList.toggle('hidden', !isBoy);
+            smokeUnsubscribe = db.collection("rooms").doc(myRoomId).collection("smokes").orderBy("order", "asc").onSnapshot((snapshot) => {
+                const list = document.getElementById('smoke-list');
+                list.innerHTML = snapshot.empty ? `<div class="text-center text-gray-300 text-sm mt-10">暫無品牌</div>` : '';
+                snapshot.forEach(doc => {
+                    const d = doc.data(), todayStr = getLogicalDateStr(), displayToday = (d.lastUpdated === todayStr ? d.todayCount : 0);
+                    let content = `<div><h3 class="font-bold text-gray-700 text-sm">${d.brandName}</h3><p class="text-xs text-gray-400 mt-1">庫存: <span class="font-bold text-gray-600">${d.stock}</span> ${isBoy?`<button onclick="editStock('${doc.id}', ${d.stock})" class="text-gray-300 ml-1"><i class="fa-solid fa-pen text-[10px]"></i></button>`:''}</p></div>`;
+                    let ctrls = isBoy ? `<div class="flex items-center gap-3"><button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', -1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 font-bold">-</button><span class="text-xl font-bold text-[#5D93E1] w-6 text-center">${displayToday}</span><button onclick="changeSmokeCount('${doc.id}', '${d.brandName}', 1, ${displayToday}, ${d.stock}, '${d.lastUpdated}')" class="w-8 h-8 rounded-full bg-[#5D93E1] text-white font-bold shadow-md">+</button></div>` : `<span class="text-xl font-bold text-[#5D93E1] px-2">今日: ${displayToday}</span>`;
+                    let menu = isBoy ? `<div class="flex flex-col gap-2 ml-4 border-l border-gray-100 pl-4 items-center justify-center"><button onclick="openNewPack('${doc.id}', '${d.brandName}', ${d.stock})" class="text-xs bg-[#ECF4FF] text-[#5D93E1] px-2 py-1 rounded font-bold">開新包</button><button onclick="deleteSmokeBrand('${doc.id}')" class="text-gray-300 text-xs mt-1"><i class="fa-solid fa-trash"></i></button></div>` : '';
+                    list.innerHTML += `<div class="bg-white p-3 rounded-xl soft-shadow flex items-center justify-between mb-2 relative" data-id="${doc.id}">${isBoy?'<div class="drag-handle text-gray-300 mr-3 cursor-move px-2"><i class="fa-solid fa-bars"></i></div>':''}<div class="flex-1">${content}</div>${ctrls}${menu}</div>`;
                 });
+                if(isBoy && !sortableInstance) sortableInstance = new Sortable(list, { handle: '.drag-handle', animation: 150, onEnd: updateOrder });
+            });
         }
 
         function updateOrder() {
-            const items = document.querySelectorAll('#smoke-list > div');
             const batch = db.batch();
-            items.forEach((item, index) => {
-                const id = item.getAttribute('data-id');
-                const ref = db.collection("rooms").doc(myRoomId).collection("smokes").doc(id);
-                batch.update(ref, { order: index });
-            });
+            document.querySelectorAll('#smoke-list > div').forEach((el, i) => batch.update(db.collection("rooms").doc(myRoomId).collection("smokes").doc(el.getAttribute('data-id')), { order: i }));
             batch.commit();
         }
         function toggleAddSmoke() { document.getElementById('add-smoke-box').classList.toggle('hidden'); }
-        function addSmokeBrand() {
-            const name = document.getElementById('new-smoke-name').value;
-            if(!name) return;
-            db.collection("rooms").doc(myRoomId).collection("smokes").add({ brandName: name, stock: 20, todayCount: 0, lastUpdated: getLogicalDateStr(), order: 999 }).then(() => { document.getElementById('new-smoke-name').value = ''; toggleAddSmoke(); });
+        function addSmokeBrand() { const n = document.getElementById('new-smoke-name').value; if(n) db.collection("rooms").doc(myRoomId).collection("smokes").add({ brandName: n, stock: 20, todayCount: 0, lastUpdated: getLogicalDateStr(), order: 999 }).then(() => { document.getElementById('new-smoke-name').value = ''; toggleAddSmoke(); }); }
+        function deleteSmokeBrand(id) { if(confirm("刪除品牌？")) db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).delete(); }
+        function editStock(id, cur) { const v = prompt("修改庫存：", cur); if(v !== null && !isNaN(v)) db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: Number(v) }); }
+        function changeSmokeCount(id, name, delta, curT, curS, last) { const today = getLogicalDateStr(); let newT = (last === today ? curT : 0) + delta; if(newT < 0 || (delta > 0 && curS <= 0)) return delta > 0 ? alert("沒菸了") : null; db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: curS - delta, todayCount: newT, lastUpdated: today }); logHistory(name, delta, curS - delta); }
+        function openNewPack(id, name, cur) { db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: cur + 20 }); logPackOpen(name, cur + 20); }
+
+        function logHistory(brand, delta, stock) {
+            const date = getLogicalDateStr(), ref = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(date);
+            ref.get().then(doc => {
+                if (doc.exists) ref.update({ total: firebase.firestore.FieldValue.increment(delta), [`details.${brand}`]: firebase.firestore.FieldValue.increment(delta), [`stocks.${brand}`]: stock });
+                else ref.set({ date, total: delta, details: { [brand]: delta }, stocks: { [brand]: stock }, packsOpened: [] });
+            });
         }
-        function deleteSmokeBrand(id) { if(confirm("刪除此品牌？")) db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).delete(); }
-        function editStock(id, current) {
-            const newVal = prompt("修改庫存數量：", current);
-            if(newVal !== null && !isNaN(newVal)) db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: Number(newVal) });
-        }
-        
-        function changeSmokeCount(id, brandName, delta, currentToday, currentStock, lastDate) {
-            const todayStr = getLogicalDateStr(); // 確保使用6點分界的日期
-            let newToday = currentToday;
-            if (lastDate !== todayStr) newToday = 0;
-            newToday += delta;
-            let newStock = currentStock - delta;
-            if(newToday < 0) return;
-            if(delta > 0 && currentStock <= 0) { alert("沒菸了！"); return; }
-            db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: newStock, todayCount: newToday, lastUpdated: todayStr });
-            logHistory(brandName, delta, newStock); 
-        }
-        
-        function openNewPack(id, brandName, currentStock) {
-            const newStock = currentStock + 20;
-            db.collection("rooms").doc(myRoomId).collection("smokes").doc(id).update({ stock: newStock });
-            logPackOpen(brandName, newStock);
-        }
-        
-        // 🔥 修正：確保詳細紀錄以物件結構寫入
-        function logHistory(brandName, delta, newStock) {
-            const todayStr = getLogicalDateStr(); // 使用6點分界
-            const logRef = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(todayStr);
-            
-            logRef.get().then(doc => {
-                if (doc.exists) {
-                    const updatePayload = {};
-                    updatePayload['total'] = firebase.firestore.FieldValue.increment(delta);
-                    updatePayload[`details.${brandName}`] = firebase.firestore.FieldValue.increment(delta);
-                    updatePayload[`stocks.${brandName}`] = newStock;
-                    logRef.update(updatePayload);
-                } else {
-                    const newPayload = {
-                        date: todayStr,
-                        total: delta,
-                        details: { [brandName]: delta },
-                        stocks: { [brandName]: newStock },
-                        packsOpened: []
-                    };
-                    logRef.set(newPayload);
-                }
+        function logPackOpen(brand, stock) {
+            const date = getLogicalDateStr(), ref = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(date);
+            ref.get().then(doc => {
+                if (doc.exists) ref.update({ packsOpened: firebase.firestore.FieldValue.arrayUnion(brand), [`stocks.${brand}`]: stock });
+                else ref.set({ date, total: 0, details: {}, stocks: { [brand]: stock }, packsOpened: [brand] });
             });
         }
 
-        function logPackOpen(brandName, newStock) {
-            const todayStr = getLogicalDateStr();
-            const logRef = db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(todayStr);
-            
-            logRef.get().then(doc => {
-                if(doc.exists) {
-                     logRef.update({
-                        packsOpened: firebase.firestore.FieldValue.arrayUnion(brandName),
-                        [`stocks.${brandName}`]: newStock
-                     });
-                } else {
-                     logRef.set({
-                        date: todayStr,
-                        total: 0,
-                        details: {},
-                        stocks: { [brandName]: newStock },
-                        packsOpened: [brandName]
-                     });
-                }
-            });
-        }
-        
-        // 🔥 修正：優化詳細歷史顯示
+        // --- 修正後的詳細歷史函式 ---
         function showGlobalHistory() {
             const modal = document.getElementById('modal-history');
             const list = document.getElementById('hist-list');
             modal.style.display = 'flex';
             list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">載入中...</div>';
 
-            db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").limit(14).get().then(snapshot => {
-                list.innerHTML = '';
-                if(snapshot.empty) { 
-                    list.innerHTML = '<div class="text-center text-xs text-gray-300 mt-4">暫無歷史紀錄</div>'; 
-                    return; 
-                }
-                
-                let docs = [];
-                snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-                docs.sort((a, b) => b.id.localeCompare(a.id));
-
-                docs.forEach(d => {
-                    const date = d.id;
-                    const total = d.total || 0;
-                    const details = d.details || {}; 
-                    const stocks = d.stocks || {}; 
-                    const packs = d.packsOpened || [];
-                    
-                    let detailItems = [];
-                    if (details && Object.keys(details).length > 0) {
-                        Object.entries(details).forEach(([brand, count]) => {
-                            if (count !== 0 || stocks[brand] !== undefined) {
-                                const stockInfo = stocks[brand] !== undefined ? `<span class="text-gray-400 font-normal scale-90 ml-1">(餘${stocks[brand]})</span>` : '';
-                                detailItems.push(`
-                                    <span class="inline-block bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 mr-1 mb-1 text-xs text-gray-600">
-                                        ${brand}: <span class="font-bold text-[#5D93E1] text-sm">${count}</span>${stockInfo}
-                                    </span>
-                                `);
-                            }
-                        });
-                    }
-                    
-                    let detailStr = detailItems.join('');
-                    if(!detailStr) detailStr = "<span class='text-gray-300 text-xs italic pl-1'>無詳細分類資料</span>";
-
-                    let packStr = packs.length > 0 ? `<div class="text-[10px] text-[#5D93E1] mt-2 bg-[#ECF4FF] inline-block px-2 py-1 rounded"><i class="fa-solid fa-box-open mr-1"></i>開了: ${packs.join(', ')}</div>` : '';
-                    
-                    let editBtn = '';
-                    if (myRole === 'Girl') {
-                        editBtn = `<button onclick="editHistoryLog('${date}', ${total})" class="ml-2 text-gray-300 hover:text-[#5D93E1]"><i class="fa-solid fa-pen text-xs"></i></button>`;
-                    }
-
-                    list.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl soft-shadow mb-3 border border-transparent hover:border-[#5D93E1]/20 transition">
-                            <div class="flex justify-between items-center mb-2 border-b border-gray-100 pb-2">
-                                <span class="text-gray-700 font-bold text-sm"><i class="fa-regular fa-calendar mr-2 text-gray-400"></i>${date}</span>
-                                <span class="text-[#5D93E1] font-bold text-lg">${total} <span class="text-xs text-gray-400 font-normal">根</span>${editBtn}</span>
-                            </div>
-                            <div class="flex flex-wrap items-center mt-1">
-                                ${detailStr}
-                            </div>
-                            ${packStr}
+            db.collection("rooms").doc(myRoomId).collection("smoke_history_v2")
+                .orderBy(firebase.firestore.FieldPath.documentId(), "desc") 
+                .limit(20)
+                .get()
+                .then(snapshot => {
+                    list.innerHTML = snapshot.empty ? '<div class="text-center text-xs text-gray-300 mt-4">暫無歷史紀錄</div>' : '';
+                    snapshot.forEach(doc => {
+                        const d = doc.data(), details = d.details || {}, stocks = d.stocks || {}, packs = d.packsOpened || [];
+                        let detailHtml = Object.entries(details).map(([b, c]) => `<span class="inline-block bg-gray-50 border border-gray-100 rounded-lg px-2 py-1 mr-1 mb-1 text-xs text-gray-600">${b}: <span class="font-bold text-[#5D93E1]">${c}</span>${stocks[b]!==undefined?`<span class="text-gray-400 font-normal scale-90 ml-1">(餘${stocks[b]})</span>`:''}</span>`).join('') || "<span class='text-gray-300 text-xs italic'>無資料</span>";
+                        list.innerHTML += `<div class="bg-white p-4 rounded-xl soft-shadow mb-3 border border-transparent hover:border-[#5D93E1]/20 transition">
+                            <div class="flex justify-between items-center mb-2 border-b border-gray-100 pb-2"><span class="text-gray-700 font-bold text-sm"><i class="fa-regular fa-calendar mr-2 text-gray-400"></i>${doc.id}</span><span class="text-[#5D93E1] font-bold text-lg">${d.total || 0} <span class="text-xs text-gray-400 font-normal">根</span>${myRole==='Girl'?`<button onclick="editHistoryLog('${doc.id}', ${d.total})" class="ml-2 text-gray-300"><i class="fa-solid fa-pen text-xs"></i></button>`:''}</span></div>
+                            <div class="flex flex-wrap items-center mt-1">${detailHtml}</div>
+                            ${packs.length?`<div class="text-[10px] text-[#5D93E1] mt-2 bg-[#ECF4FF] inline-block px-2 py-1 rounded"><i class="fa-solid fa-box-open mr-1"></i>開了: ${packs.join(', ')}</div>`:''}
                         </div>`;
+                    });
+                })
+                .catch(err => {
+                    console.error("載入失敗，錯誤細節:", err);
+                    list.innerHTML = `<div class="text-center p-4"><p class="text-xs text-red-400">載入失敗</p><p class="text-[10px] text-gray-400 mt-2">原因：需於 Firebase 建立索引。<br>請查看瀏覽器主控台(F12)並點擊紅字連結。</p></div>`;
                 });
-            });
         }
-        
+
         function closeHistory() { document.getElementById('modal-history').style.display = 'none'; }
-        
-        function editHistoryLog(date, currentTotal) {
-            const newVal = prompt(`修正 ${date} 的總抽菸數：`, currentTotal);
-            if(newVal !== null && !isNaN(newVal)) db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(date).update({ total: Number(newVal) }).then(() => { alert("修改成功！"); showGlobalHistory(); });
-        }
+        function editHistoryLog(date, cur) { const v = prompt(`修正 ${date} 總數：`, cur); if(v !== null && !isNaN(v)) db.collection("rooms").doc(myRoomId).collection("smoke_history_v2").doc(date).update({ total: Number(v) }).then(showGlobalHistory); }
 
-        // 記帳存檔
         function saveTransaction() {
-            const amt = document.getElementById('input-amount').value;
-            const title = document.getElementById('input-title').value;
-            const dateStr = document.getElementById('input-date').value; 
-            
-            if(!amt) return alert("請輸入金額");
-            if(!dateStr) return alert("請選擇日期");
-            if (currentCategory === 'others' && !title) return alert("請輸入項目名稱");
-            
-            const collectionRef = db.collection("rooms").doc(myRoomId).collection("transactions");
-            const btn = document.getElementById('btn-submit');
-            btn.innerText = "處理中...";
-
-            const now = new Date();
-            let finalDate = new Date(dateStr);
-            finalDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
-            const timestamp = firebase.firestore.Timestamp.fromDate(finalDate);
-
-            const data = { 
-                who: myRole, 
-                amount: Number(amt), 
-                title: title, 
-                type: currentType, 
-                category: currentCategory,
-                timestamp: timestamp 
-            };
-            
-            const onComplete = () => { closeModal(); btn.innerText = "儲存"; document.getElementById('input-amount').value = ''; document.getElementById('input-title').value = ''; };
-            
-            if (editingId) {
-                collectionRef.doc(editingId).update(data).then(onComplete).catch(() => btn.innerText = "儲存");
-            } else { 
-                collectionRef.add(data).then(onComplete).catch(() => btn.innerText = "儲存"); 
-            }
+            const amt = document.getElementById('input-amount').value, dateStr = document.getElementById('input-date').value, title = document.getElementById('input-title').value;
+            if(!amt || !dateStr || (currentCategory==='others' && !title)) return alert("請填寫金額與項目");
+            const btn = document.getElementById('btn-submit'); btn.innerText = "處理中...";
+            const now = new Date(), finalDate = new Date(dateStr); finalDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+            const data = { who: myRole, amount: Number(amt), title, type: currentType, category: currentCategory, timestamp: firebase.firestore.Timestamp.fromDate(finalDate) };
+            const ref = db.collection("rooms").doc(myRoomId).collection("transactions");
+            (editingId ? ref.doc(editingId).update(data) : ref.add(data)).then(() => { closeModal(); btn.innerText = "儲存"; document.getElementById('input-amount').value = ''; document.getElementById('input-title').value = ''; });
         }
-        function deleteTransaction() { if(editingId && confirm("刪除此紀錄？")) db.collection("rooms").doc(myRoomId).collection("transactions").doc(editingId).delete().then(() => closeModal()); }
+        function deleteTransaction() { if(editingId && confirm("刪除？")) db.collection("rooms").doc(myRoomId).collection("transactions").doc(editingId).delete().then(closeModal); }
 
-        // UI Helpers
-        function selectRole(role) { localStorage.setItem('myRole', role); myRole = role; currentView = role; showPage('page-main'); initRoomListener(); initListener(); initSmokeListener(); initCalendarListener(); renderDayBar(); }
-        function switchView(role) { currentView = role; initListener(); }
+        function selectRole(r) { localStorage.setItem('myRole', r); myRole = r; currentView = r; showPage('page-main'); initRoomListener(); initListener(); initSmokeListener(); initCalendarListener(); renderDayBar(); }
+        function switchView(r) { currentView = r; initListener(); }
         function showPage(id) { 
             document.querySelectorAll('.page').forEach(e => e.classList.remove('active')); 
             document.getElementById(id).classList.add('active'); 
-            
-            if(id === 'page-calendar') {
-                calCurrentDate = new Date(); 
-                calSelectedDate = new Date(); 
-                renderCalendar();
-                renderDayEvents();
-            }
+            if(id === 'page-calendar') { calCurrentDate = new Date(); calSelectedDate = new Date(); renderCalendar(); renderDayEvents(); }
         }
         
         function openModal(id = null) {
             document.getElementById('modal-add').style.display='flex'; 
-            
-            const btnDel = document.getElementById('btn-delete'); 
-            const btnSub = document.getElementById('btn-submit');
-            
-            // 重置按鈕狀態 (先隱藏垃圾桶)
-            btnDel.classList.add('hidden');
-            btnDel.classList.remove('flex');
-
+            const del = document.getElementById('btn-delete'), sub = document.getElementById('btn-submit');
+            del.classList.add('hidden');
             if(!id) {
-                // 新增模式
-                editingId = null; 
-                document.getElementById('input-amount').value = '';
-                document.getElementById('input-title').value = '';
-                
-                const today = new Date();
-                const y = today.getFullYear();
-                const m = String(today.getMonth() + 1).padStart(2, '0');
-                const d = String(today.getDate()).padStart(2, '0');
-                document.getElementById('input-date').value = `${y}-${m}-${d}`;
-
-                btnSub.innerText="儲存"; 
-                btnSub.style.display='block';
-                setType('expense'); selectCategory('breakfast');
+                editingId = null; document.getElementById('input-amount').value = ''; document.getElementById('input-title').value = '';
+                const today = new Date(); document.getElementById('input-date').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+                sub.innerText="儲存"; sub.style.display='block'; setType('expense'); selectCategory('breakfast');
             } else {
-                // 編輯模式
                 const d = transactionsData[id];
                 if(d) {
-                    editingId = id; 
-                    document.getElementById('input-title').value = d.title || ''; 
-                    document.getElementById('input-amount').value = d.amount; 
-                    
-                    if(d.timestamp) {
-                        const date = d.timestamp.toDate();
-                        const y = date.getFullYear();
-                        const m = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        document.getElementById('input-date').value = `${y}-${m}-${day}`;
-                    }
-
-                    setType(d.type); 
-                    selectCategory(d.category || 'others');
-                    
-                    if(currentView === myRole){ 
-                        btnSub.style.display='block'; 
-                        btnDel.classList.remove('hidden'); 
-                        btnDel.classList.add('flex'); 
-                        btnSub.innerText="更新"; 
-                    } 
-                    else { 
-                        btnSub.style.display='none'; 
-                    }
+                    editingId = id; document.getElementById('input-title').value = d.title || ''; document.getElementById('input-amount').value = d.amount;
+                    if(d.timestamp) { const date = d.timestamp.toDate(); document.getElementById('input-date').value = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`; }
+                    setType(d.type); selectCategory(d.category || 'others');
+                    if(currentView === myRole) { sub.style.display='block'; del.classList.remove('hidden'); sub.innerText="更新"; } else sub.style.display='none';
                 }
             }
         }
-        
         function closeModal() { document.getElementById('modal-add').style.display = 'none'; }
-        
         function setType(t) { 
             currentType = t;
-            const tabExp = document.getElementById('tab-expense'); const tabInc = document.getElementById('tab-income');
-            if(t === 'expense') {
-                tabExp.className = "px-6 py-1.5 rounded-md text-sm font-bold transition shadow-sm bg-white text-gray-700";
-                tabInc.className = "px-6 py-1.5 rounded-md text-sm font-bold transition text-gray-400";
-                renderCategories(CATEGORIES.expense);
-            } else {
-                tabExp.className = "px-6 py-1.5 rounded-md text-sm font-bold transition text-gray-400";
-                tabInc.className = "px-6 py-1.5 rounded-md text-sm font-bold transition shadow-sm bg-white text-gray-700";
-                renderCategories(CATEGORIES.income);
-            }
-        }
-        function renderCategories(list) {
+            const exp = document.getElementById('tab-expense'), inc = document.getElementById('tab-income');
+            exp.className = t==='expense' ? "px-6 py-1.5 rounded-md text-sm font-bold bg-white shadow-sm" : "px-6 py-1.5 text-gray-400 font-bold";
+            inc.className = t==='income' ? "px-6 py-1.5 rounded-md text-sm font-bold bg-white shadow-sm" : "px-6 py-1.5 text-gray-400 font-bold";
             const grid = document.getElementById('category-grid'); grid.innerHTML = '';
-            list.forEach(cat => {
-                grid.innerHTML += `
-                    <div onclick="selectCategory('${cat.id}')" id="cat-${cat.id}" class="cat-item flex flex-col items-center justify-center p-2 rounded-xl cursor-pointer bg-white border border-gray-100 h-20">
-                        <i class="fa-solid ${cat.icon} text-xl mb-1 text-gray-400"></i>
-                        <span class="text-xs text-gray-500 font-medium">${cat.name}</span>
-                    </div>`;
-            });
-            selectCategory(list[0].id);
+            CATEGORIES[t].forEach(cat => grid.innerHTML += `<div onclick="selectCategory('${cat.id}')" id="cat-${cat.id}" class="cat-item flex flex-col items-center justify-center p-2 rounded-xl cursor-pointer bg-white border border-gray-100 h-20"><i class="fa-solid ${cat.icon} text-xl mb-1 text-gray-400"></i><span class="text-xs text-gray-500 font-medium">${cat.name}</span></div>`);
+            selectCategory(CATEGORIES[t][0].id);
         }
         function selectCategory(id) {
             currentCategory = id;
-            document.querySelectorAll('.cat-item').forEach(el => {
-                el.classList.remove('active', 'active-income');
-                el.querySelector('i').classList.remove('text-[#5D93E1]', 'text-[#219EBC]');
-                el.querySelector('i').classList.add('text-gray-400');
-            });
-            const activeClass = currentType === 'expense' ? 'active' : 'active-income';
-            // 藍色圖標
-            const iconColor = currentType === 'expense' ? 'text-[#5D93E1]' : 'text-[#219EBC]';
+            document.querySelectorAll('.cat-item').forEach(el => { el.classList.remove('active', 'active-income'); el.querySelector('i').classList.add('text-gray-400'); el.querySelector('i').classList.remove('text-[#5D93E1]', 'text-[#219EBC]'); });
             const target = document.getElementById(`cat-${id}`);
-            if(target) {
-                target.classList.add(activeClass);
-                target.querySelector('i').classList.remove('text-gray-400');
-                target.querySelector('i').classList.add(iconColor);
-            }
-            const inputTitle = document.getElementById('input-title');
-            if(id === 'others') inputTitle.placeholder = "請輸入項目名稱 (必填)"; else inputTitle.placeholder = "備註 (選填)";
+            if(target) { target.classList.add(currentType==='expense'?'active':'active-income'); target.querySelector('i').classList.replace('text-gray-400', currentType==='expense'?'text-[#5D93E1]':'text-[#219EBC]'); }
+            document.getElementById('input-title').placeholder = id === 'others' ? "項目名稱 (必填)" : "備註 (選填)";
         }
-        function logout() { if(confirm("確定要登出嗎？")) { localStorage.clear(); location.reload(); } }
+        function logout() { if(confirm("登出？")) { localStorage.clear(); location.reload(); } }
         function updateUI() {
              const fab = document.getElementById('fab-add');
-             document.getElementById('btn-go-smoke').classList.remove('hidden');
              if(currentView !== myRole) { fab.style.display='none'; document.getElementById('readonly-tip').style.display='block'; }
              else { fab.style.display='flex'; document.getElementById('readonly-tip').style.display='none'; }
              document.getElementById('avatar-Boy').style.opacity = currentView === 'Boy' ? '1' : '0.5';
